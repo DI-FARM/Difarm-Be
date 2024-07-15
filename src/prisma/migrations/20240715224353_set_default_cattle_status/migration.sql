@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Cattle" ALTER COLUMN "status" SET DEFAULT 'HEALTHY';
