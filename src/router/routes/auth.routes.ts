@@ -1,6 +1,9 @@
 import { Router, Request, Response } from 'express';
 import signupValidation from '../../middleware/signupValidation.middleware';
-import { getAllUsers, registerUser, userLogin, userLogout} from '../../controller/auth.controller';
+import { forgotPassword, getAllUsers, registerUser, userLogin, userLogout} from '../../controller/auth.controller';
+import asyncWrapper from "../../util/asyncWrapper";
+import validate from "../../middleware/validation/validation";
+import resetPasswordSchemas from "../../validation/resetPasswordSchemas";
 
 const route = Router();
 
@@ -8,6 +11,11 @@ route.post('/signup', signupValidation, registerUser);
 route.post('/login', userLogin);
 route.post('/logout', userLogout);
 route.get('/users', getAllUsers);
+route.get(
+  "/forgotpass",
+  validate(resetPasswordSchemas.forgotPasswordSchema),
+  asyncWrapper(forgotPassword)
+);
 
 
 export default route;
