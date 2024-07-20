@@ -62,6 +62,23 @@ export const registerUser = async (req: Request, res: Response) => {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ status: ReasonPhrases.INTERNAL_SERVER_ERROR, error: 'Server error' });
     }
 };
+export const getAllUsers = async (req: Request, res: Response) => {
+    try {
+        const users = await prisma.user.findMany({
+            include: {
+                account: true,
+            },
+        });
+
+        responseHandler.setSuccess(StatusCodes.OK, "Users retrieved successfully", users);
+        return responseHandler.send(res);
+    } catch (error) {
+        console.error('Error retrieving users:', error);
+        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, "Error retrieving users");
+        return responseHandler.send(res);
+    }
+};
+
 
 export const emailVerification = async (req: Request, res: Response) => {
     const { token } = req.query;
