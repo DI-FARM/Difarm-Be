@@ -43,7 +43,7 @@ export const getFarms = async (req: Request, res: Response) => {
     
 
     try {
-        const farms = await prisma.farm.findMany();
+        const farms = await prisma.farm.findMany({ include: { owner: true } });
         responseHandler.setSuccess(200, 'Farms retrieved successfully', farms);
     } catch (error) {
         responseHandler.setError(500, 'Error fetching farms');

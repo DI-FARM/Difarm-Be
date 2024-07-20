@@ -5,8 +5,10 @@ import passportLocal from "../config/passportLocal";
 import ResponseHandler from "../util/responseHandler";
 import prisma from "../db/prisma";
 import { sendEmail } from "../service/sendEmail.service";
-import { generateEmailVerificationToken, verifyToken } from "../service/token.service";
+import { generateEmailVerificationToken, generateForgotPasswordToken, verifyToken } from "../service/token.service";
 import { UserI } from "../interface/user.interface";
+import userService from "../service/user.service";
+import templateMails from "../util/templateMails";
 
 const responseHandler = new ResponseHandler();
 
@@ -175,4 +177,22 @@ export const checkAuth = (req: Request, res: Response) => {
     } else {
         res.status(StatusCodes.BAD_REQUEST).json({ isAuthenticated: false });
     }
+};
+
+export const forgotPassword = async(req: Request, res: Response) => {
+const {email}= req.body
+const user = await userService.getUserByEmail(email)
+if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+      message: 'User with email does not exist!',
+    });
+  }
+const userMeta = {
+    email,
+    id: user.id
+}
+const verifToken = generateForgotPasswordToken(userMeta)
+const emailBody = templateMails.ForgortPasswordTemplate(verifToken)
+await sendEmail(email, 'Reset password link', emailBody)
+return res.status(StatusCodes.OK).json({message:`we have sent password reset link to your email ${email}`})
 };

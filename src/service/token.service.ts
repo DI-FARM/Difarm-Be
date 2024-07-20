@@ -22,6 +22,12 @@ const generateEmailVerificationToken = (data: EmailVerifyI) => {
     });
     return token;
 };
+const generateForgotPasswordToken = (data: {email: string, id: string}) => {
+    const token = Jwt.sign({ data }, process.env.JWT_VERIF_SECRET as string, {
+        expiresIn: process.env.EXPIRE_VERIF_TIME,
+    });
+    return token;
+};
 
 const verifyToken = (token: string, type: string): any => {
     if (type === "verify-email") {
@@ -40,4 +46,4 @@ const verifyToken = (token: string, type: string): any => {
         return decoded;
     });
 };
-export { generateToken, generateEmailVerificationToken, verifyToken };
+export { generateToken, generateEmailVerificationToken, verifyToken, generateForgotPasswordToken };
