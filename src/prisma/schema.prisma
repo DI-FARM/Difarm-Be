@@ -71,6 +71,11 @@ model Farm {
   owner       User     @relation("UserFarms", fields: [ownerId], references: [id])
   cattle      Cattle[] @relation("FarmToCattle")
 
+  productions Production[]
+
+  stocks      Stock[]
+  transactions Transaction[]
+
   @@index([ownerId])
 }
 
@@ -95,6 +100,8 @@ model Cattle {
 
   farm             Farm         @relation("FarmToCattle", fields: [farmId], references: [id])
 
+  productions      Production[]
+
   @@index([farmId])
 }
 
@@ -103,3 +110,53 @@ enum CattleStatus {
   SICK
   SOLD
 }
+
+model Production {
+  id              String   @id @default(uuid())
+  farmId          String
+  cattleId        String
+  productName     String
+  quantity        Int
+  productionDate  DateTime
+  expirationDate  DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  farm            Farm     @relation(fields: [farmId], references: [id])
+  cattle          Cattle   @relation(fields: [cattleId], references: [id])
+
+  @@index([farmId])
+  @@index([cattleId])
+}
+
+model Stock {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  quantity    Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  farmId      String
+  farm        Farm       @relation(fields: [farmId], references: [id])
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  stockId     String
+  stock       Stock    @relation(fields: [stockId], references: [id])
+  quantity    Int
+  type        TransactionType
+  date        DateTime @default(now())
+  farmId      String
+  farm        Farm     @relation(fields: [farmId], references: [id])
+
+  @@index([stockId])
+  @@index([farmId])
+}
+
+enum TransactionType {
+  ADDITION
+  CONSUME
+}
+

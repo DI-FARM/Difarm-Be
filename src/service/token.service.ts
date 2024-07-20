@@ -9,7 +9,7 @@ interface EmailVerifyI {
     userId: String
 }
 
-const generateToken = (data: AccountI) => {
+const generateToken = (data: any) => {
     const token = Jwt.sign({ data }, process.env.JWT_SECRET as string, {
         expiresIn: process.env.EXPIRE_TIME,
     });

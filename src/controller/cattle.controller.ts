@@ -1,35 +1,50 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import ResponseHandler from "../util/responseHandler";
+import prisma from '../db/prisma';
+import { StatusCodes } from 'http-status-codes';
 
-const prisma = new PrismaClient();
 
 export const createCattle = async (req: Request, res: Response) => {
     const { tagNumber, breed, gender, DOB, weight, location, farmId, lastCheckupDate, vaccineHistory, purchaseDate, price } = req.body;
     const responseHandler = new ResponseHandler();
 
     try {
+        const tagNumberExist = await prisma.cattle.findUnique({ where: { tagNumber } });
+        const farmExist = await prisma.farm.findUnique({ where: { id: farmId } });
+
+        if (tagNumberExist) {
+            responseHandler.setError(StatusCodes.BAD_REQUEST, "A cattle with this  tag number already exists.");
+            return responseHandler.send(res);
+        }
+
+        if (!farmExist) {
+            responseHandler.setError(StatusCodes.NOT_FOUND, "Farm not found.");
+            return responseHandler.send(res);
+        }
+        const weightFloat = parseFloat(weight);
+        const priceFloat = parseFloat(price);
+
         const newCattle = await prisma.cattle.create({
             data: {
                 tagNumber,
                 breed,
                 gender,
                 DOB,
-                weight,
+                weight: weightFloat,
                 location,
                 farmId,
                 lastCheckupDate,
                 vaccineHistory,
                 purchaseDate,
-                price,
+                price: priceFloat,
             },
         });
-        responseHandler.setSuccess(201, 'Cattle created successfully', newCattle);
+        responseHandler.setSuccess(StatusCodes.CREATED, 'Cattle created successfully', newCattle);
         return responseHandler.send(res);
     } catch (error) {
         console.log(error);
         
-        responseHandler.setError(500, 'Error creating cattle');
+        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error creating cattle');
         return responseHandler.send(res);
     }
 };
@@ -40,10 +55,10 @@ export const getCattles = async (req: Request, res: Response) => {
 
     try {
         const cattles = await prisma.cattle.findMany();
-        responseHandler.setSuccess(200, 'Cattles fetched successfully', cattles);
+        responseHandler.setSuccess(StatusCodes.OK, 'Cattles fetched successfully', cattles);
         return responseHandler.send(res);
     } catch (error) {
-        responseHandler.setError(500, 'Error fetching cattles');
+        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error fetching cattles');
         return responseHandler.send(res);
     }
 };
@@ -58,14 +73,14 @@ export const getCattleById = async (req: Request, res: Response) => {
         });
 
         if (!cattle) {
-            responseHandler.setError(404, 'Cattle not found');
+            responseHandler.setError(StatusCodes.NOT_FOUND, 'Cattle not found');
             return responseHandler.send(res);
         }
 
-        responseHandler.setSuccess(200, 'Cattle fetched successfully', cattle);
+        responseHandler.setSuccess(StatusCodes.OK, 'Cattle fetched successfully', cattle);
         return responseHandler.send(res);
     } catch (error) {
-        responseHandler.setError(500, 'Error fetching cattle');
+        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error fetching cattle');
         return responseHandler.send(res);
     }
 };
@@ -94,10 +109,10 @@ export const updateCattle = async (req: Request, res: Response) => {
             },
         });
 
-        responseHandler.setSuccess(200, 'Cattle updated successfully', updatedCattle);
+        responseHandler.setSuccess(StatusCodes.OK, 'Cattle updated successfully', updatedCattle);
         return responseHandler.send(res);
     } catch (error) {
-        responseHandler.setError(500, 'Error updating cattle');
+        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error updating cattle');
         return responseHandler.send(res);
     }
 };
@@ -111,10 +126,10 @@ export const deleteCattle = async (req: Request, res: Response) => {
         await prisma.cattle.delete({
             where: { id },
         });
-        responseHandler.setSuccess(204, 'Cattle deleted successfully', null);
+        responseHandler.setSuccess(StatusCodes.OK, 'Cattle deleted successfully', null);
         return responseHandler.send(res);
     } catch (error) {
-        responseHandler.setError(500, 'Error deleting cattle');
+        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error deleting cattle');
         return responseHandler.send(res);
     }
 };

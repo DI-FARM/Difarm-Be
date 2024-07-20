@@ -1,17 +1,5 @@
 import Joi from "joi"
 
-
-interface userBody {
-    fullname: string;
-    username:string;
-    email: string;
-    gender: string;
-    phone?: string;
-    DOB: string;
-    password: string;
-
-}
-
 const userSchema = Joi.object({
     fullname: Joi.string().min(3).trim().required(),
     username: Joi.string().min(3).trim().required(),

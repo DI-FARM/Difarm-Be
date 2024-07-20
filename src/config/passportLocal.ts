@@ -34,14 +34,26 @@ passport.use(new LocalStrategy({
     if (!userFound) {
       return done(null, false);
     }
+
+    // const userData = await userModel.findOne({accountId: userFound._id})
     const isPasswordValid = userFound.password ? await comparePassword(password, userFound.password) : false;
 
     if (!isPasswordValid) {
       return done(null, false);
     }
     
-    const userData = userFound as AccountI;
-    const token = generateToken(userData);
+    const userData = await prisma.user.findFirst({ where: {accountId: userFound.id}});
+    const {id, email, role, status} = userFound;
+    const userDataPayLoad = {
+      id,
+      userId: userData?.id,
+      username: userFound.username,
+      email,
+      role,
+      status
+    }
+    console.log(userDataPayLoad.username);
+    const token = generateToken(userDataPayLoad);
     return done(null, { userFound: userFound, token });
   } catch (error) {
     return done(error);

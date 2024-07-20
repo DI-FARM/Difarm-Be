@@ -17,10 +17,16 @@ export const registerUser = async (req: Request, res: Response) => {
         } = req.body;
 
         const emailExist = await prisma.account.findUnique({ where: { email } });
+        const phoneExist = await prisma.account.findUnique({ where: { phone } });
         const accountExist = await prisma.account.findUnique({ where: { username } });
 
         if (emailExist) {
             responseHandler.setError(StatusCodes.BAD_REQUEST, "An account with this email address already exists.");
+            return responseHandler.send(res);
+        }
+
+        if (phoneExist) {
+            responseHandler.setError(StatusCodes.BAD_REQUEST, "An account with this phone address already exists.");
             return responseHandler.send(res);
         }
 
