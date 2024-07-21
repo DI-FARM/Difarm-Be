@@ -191,8 +191,26 @@ const userMeta = {
     email,
     id: user.id
 }
-const verifToken = generateForgotPasswordToken(userMeta)
-const emailBody = templateMails.ForgortPasswordTemplate(verifToken)
-await sendEmail(email, 'Reset password link', emailBody)
-return res.status(StatusCodes.OK).json({message:`we have sent password reset link to your email ${email}`})
+const verifToken = generateForgotPasswordToken(userMeta);
+const emailBody = templateMails.ForgortPasswordTemplate(verifToken);
+await sendEmail(email, "Reset password link", emailBody);
+return res
+  .status(StatusCodes.OK)
+  .json({ message: `we have sent password reset link to your email ${email}` });
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token } = req.params;
+  if (!token) {
+    return res.status(StatusCodes.NOT_FOUND).json({
+        message: "No token provided",
+      });
+  }
+  const payload = verifyToken(token, "reset-pass");
+  const { email } = payload.data;
+  const hashedPassword: string = await hashPassword(req.body.newPassword)
+  await userService.resetPassword(email,hashedPassword);
+  res.status(StatusCodes.OK).json({
+    message: "You have reset successful your password",
+  });
 };

@@ -19,7 +19,6 @@ passport.use(new LocalStrategy({
   passwordField: 'password'
 }, async (username, password, done) => {
   try {
-    console.log(username);
     
     const userFound = await prisma.account.findFirst({
         where: {
