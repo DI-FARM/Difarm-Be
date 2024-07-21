@@ -6,10 +6,10 @@ import transactionValidation from "../../middleware/stockTransValidation.middlew
 
 const router = Router();
 
-router.post('/', checkRole([Roles.SUPERADMIN, Roles.MANAGER]),  transactionValidation,  createTransaction);
-router.get('/', checkRole([Roles.SUPERADMIN, Roles.MANAGER]), getAllTransactions);
-router.get('/:id', checkRole([Roles.ADMIN, Roles.MANAGER]), getTransactionById);
-router.put('/:id', checkRole([Roles.ADMIN, Roles.MANAGER]), updateTransaction);
-router.delete('/:id', checkRole([Roles.ADMIN, Roles.MANAGER]), deleteTransaction);
+router.post('/', checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),  transactionValidation,  createTransaction);
+router.get('/', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), getAllTransactions);
+router.get('/:id', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), getTransactionById);
+router.put('/:id', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), updateTransaction);
+router.delete('/:id', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), deleteTransaction);
 
 export default router;

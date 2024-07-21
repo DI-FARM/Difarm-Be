@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import ResponseHandler from '../util/responseHandler';
-import { Roles } from '../util/enum/Roles.enum';
 import prisma from '../db/prisma';
 import { StatusCodes } from 'http-status-codes';
 import { TransactionEnum } from '../util/enum/StockTrans.enum';
