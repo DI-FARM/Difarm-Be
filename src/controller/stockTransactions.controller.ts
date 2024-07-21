@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import ResponseHandler from '../util/responseHandler';
-import prisma from '../db/prisma';
 import { StatusCodes } from 'http-status-codes';
 import { TransactionEnum } from '../util/enum/StockTrans.enum';
+import { PrismaClient } from '@prisma/client';
 
 const responseHandler = new ResponseHandler();
+
+const prisma = new PrismaClient();
 
 export const createTransaction = async (req: Request, res: Response) => {
   const { stockId, quantity, type } = req.body;
@@ -26,7 +28,27 @@ export const createTransaction = async (req: Request, res: Response) => {
       responseHandler.setError(StatusCodes.NOT_FOUND, 'Stock not found.');
       return responseHandler.send(res);
     }
+
     const quantityFloat = parseFloat(quantity);
+    if (isNaN(quantityFloat) || quantityFloat <= 0) {
+      responseHandler.setError(StatusCodes.BAD_REQUEST, 'Quantity must be a positive number.');
+      return responseHandler.send(res);
+    }
+
+    if (![TransactionEnum.ADDITION, TransactionEnum.CONSUME].includes(type)) {
+      responseHandler.setError(StatusCodes.BAD_REQUEST, 'Invalid transaction type.');
+      return responseHandler.send(res);
+    }
+
+    const updatedQuantity = type === TransactionEnum.ADDITION 
+      ? stock.quantity + quantityFloat 
+      : stock.quantity - quantityFloat;
+
+    if (type === TransactionEnum.CONSUME && updatedQuantity < 0) {
+      responseHandler.setError(StatusCodes.BAD_REQUEST, 'Insufficient stock quantity for this transaction.');
+      return responseHandler.send(res);
+    }
+
     const newTransaction = await prisma.transaction.create({
       data: {
         stockId,
@@ -36,7 +58,6 @@ export const createTransaction = async (req: Request, res: Response) => {
       },
     });
 
-    const updatedQuantity = type === TransactionEnum.ADDITION ? stock.quantity + quantity : stock.quantity - quantity;
     await prisma.stock.update({
       where: { id: stockId },
       data: { quantity: updatedQuantity },
@@ -44,6 +65,7 @@ export const createTransaction = async (req: Request, res: Response) => {
 
     responseHandler.setSuccess(StatusCodes.CREATED, 'Transaction created successfully.', newTransaction);
   } catch (error) {
+    console.error('Error creating transaction:', error);
     responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while creating the transaction.');
   }
   responseHandler.send(res);
