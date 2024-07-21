@@ -79,7 +79,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
 
     const farms = await prisma.farm.findMany({
       where: { ownerId: user.userId },
-      include: { transactions: true },
+      include: { transactions: { include: { stock: true } } },
     });
     transactions = farms.flatMap(farm => farm.transactions);
 
