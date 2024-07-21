@@ -54,7 +54,7 @@ export const getCattles = async (req: Request, res: Response) => {
     const responseHandler = new ResponseHandler();
 
     try {
-        const cattles = await prisma.cattle.findMany();
+        const cattles = await prisma.cattle.findMany({include:{farm: true}});
         responseHandler.setSuccess(StatusCodes.OK, 'Cattles fetched successfully', cattles);
         return responseHandler.send(res);
     } catch (error) {
