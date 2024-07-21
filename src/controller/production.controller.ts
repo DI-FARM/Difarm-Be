@@ -4,16 +4,13 @@ import ResponseHandler from '../util/responseHandler';
 import { Roles } from '../util/enum/Roles.enum';
 import { StatusCodes } from 'http-status-codes';
 
-
 const responseHandler = new ResponseHandler();
 
 export const createProduction = async (req: Request, res: Response) => {
     const { cattleId, productName, quantity, productionDate, expirationDate } = req.body;
     const { userId } = (req as any).user.data;
 
-
     try {
-
         const userFarm = await prisma.farm.findFirst({
             where: { ownerId: userId },
         });
@@ -26,7 +23,7 @@ export const createProduction = async (req: Request, res: Response) => {
         const cattleExist = await prisma.cattle.findUnique({ where: { id: cattleId } });
 
         if (!cattleExist) {
-            responseHandler.setError(StatusCodes.NOT_FOUND, "A cattle not found.");
+            responseHandler.setError(StatusCodes.NOT_FOUND, "Cattle not found.");
             return responseHandler.send(res);
         }
 
@@ -44,7 +41,6 @@ export const createProduction = async (req: Request, res: Response) => {
         responseHandler.setSuccess(StatusCodes.CREATED, 'Production record created successfully.', newProduction);
     } catch (error) {
         console.log(error);
-
         responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while creating the production record.');
     }
     responseHandler.send(res);
@@ -56,15 +52,13 @@ export const getAllProductions = async (req: Request, res: Response) => {
     try {
         let productions;
         if (user.role === Roles.SUPERADMIN) {
-            productions = await prisma.production.findMany();
+            productions = await prisma.production.findMany({
+                include: { cattle: true },
+            });
         } else if (user.role === Roles.ADMIN) {
             const farms = await prisma.farm.findMany({
-                where: {
-                    ownerId: user.id,
-                },
-                include: {
-                    productions: true,
-                },
+                where: { ownerId: user.id },
+                include: { productions: { include: { cattle: true } } },
             });
             productions = farms.flatMap(farm => farm.productions);
         } else {
@@ -86,6 +80,7 @@ export const getProductionById = async (req: Request, res: Response) => {
     try {
         const production = await prisma.production.findUnique({
             where: { id },
+            include: { cattle: true },
         });
 
         if (!production) {
@@ -114,6 +109,7 @@ export const updateProduction = async (req: Request, res: Response) => {
                 productionDate: productionDate ? new Date(productionDate) : undefined,
                 expirationDate: expirationDate ? new Date(expirationDate) : undefined,
             },
+            include: { cattle: true },
         });
         responseHandler.setSuccess(StatusCodes.OK, 'Production record updated successfully.', updatedProduction);
     } catch (error) {
@@ -124,7 +120,6 @@ export const updateProduction = async (req: Request, res: Response) => {
 
 export const deleteProduction = async (req: Request, res: Response) => {
     const { id } = req.params;
-
 
     try {
         await prisma.production.delete({
