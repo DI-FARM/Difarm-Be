@@ -147,18 +147,23 @@ export const userLogin = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export const userLogout = (req: Request, res: Response) => {
-
-    req.logout(() => {
-        req.session.destroy((err) => {
-            if (err) {
-                console.error('Error destroying session:', err);
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ status: ReasonPhrases.INTERNAL_SERVER_ERROR, error: 'Server error' });
-            }
-        });
-        return res.status(StatusCodes.OK).json({
-            message: 'Logout successful',
+    try {
+        req.logout(() => {
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error('Error destroying session:', err);
+                    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ status: ReasonPhrases.INTERNAL_SERVER_ERROR, error: 'Server error' });
+                }
+            });
+            return res.status(StatusCodes.OK).json({
+                message: 'Logout successful',
+            })
         })
-    })
+    } catch (error) {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: 'Failed to logout',
+        })
+    }
 }
 
 
