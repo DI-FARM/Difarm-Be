@@ -7,15 +7,43 @@ import {
     deleteCattle,
 } from '../../controller/cattle.controller';
 import checkRole from '../../middleware/checkRole.middleware';
-import cattlesValidation from '../../middleware/cattleValid.middleware';
+import cattleMiddleware from "../../middleware/cattle.middleware";
 import { Roles } from '@prisma/client';
+import farmMiddleware from "../../middleware/farm.middleware";
+import asyncWrapper from "../../util/asyncWrapper";
 
 const router = Router();
 
-router.post('/', checkRole([Roles.SUPERADMIN, Roles.ADMIN]), cattlesValidation, createCattle);
-router.get('/', getCattles);
-router.get('/:id', getCattleById);
-router.put('/:id', updateCattle);
-router.delete('/:id', deleteCattle);
+router.post(
+  "/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  cattleMiddleware.cattlesValidation,
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  createCattle
+);
+router.get(
+  "/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getCattles
+);
+router.get(
+  "/cattle/:cattleId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(cattleMiddleware.checkUserCattleExists),
+  getCattleById
+);
+router.put(
+  "/cattleId",
+  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(cattleMiddleware.checkUserCattleExists),
+  updateCattle
+);
+router.delete(
+  "/:id",
+  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(cattleMiddleware.checkUserCattleExists),
+  deleteCattle
+);
 
 export default router;

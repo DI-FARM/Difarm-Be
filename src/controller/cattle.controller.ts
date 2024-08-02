@@ -5,22 +5,24 @@ import { StatusCodes } from 'http-status-codes';
 
 
 export const createCattle = async (req: Request, res: Response) => {
-    const { tagNumber, breed, gender, DOB, weight, location, farmId, lastCheckupDate, vaccineHistory, purchaseDate, price } = req.body;
+    const { tagNumber, breed, gender, DOB, weight, location, lastCheckupDate, vaccineHistory, purchaseDate, price } = req.body;
+    const {farmId} = req.params
+    // const { tagNumber, breed, gender, DOB, weight, location, farmId, lastCheckupDate, vaccineHistory, purchaseDate, price } = req.body;
     const responseHandler = new ResponseHandler();
 
     try {
-        const tagNumberExist = await prisma.cattle.findUnique({ where: { tagNumber } });
-        const farmExist = await prisma.farm.findUnique({ where: { id: farmId } });
+        const tagNumberExist = await prisma.cattle.findUnique({ where: { tagNumber,farmId } });
+        // const farmExist = await prisma.farm.findUnique({ where: { id: farmId } });
 
         if (tagNumberExist) {
             responseHandler.setError(StatusCodes.BAD_REQUEST, "A cattle with this  tag number already exists.");
             return responseHandler.send(res);
         }
 
-        if (!farmExist) {
-            responseHandler.setError(StatusCodes.NOT_FOUND, "Farm not found.");
-            return responseHandler.send(res);
-        }
+        // if (!farmExist) {
+        //     responseHandler.setError(StatusCodes.NOT_FOUND, "Farm not found.");
+        //     return responseHandler.send(res);
+        // }
         const weightFloat = parseFloat(weight);
         const priceFloat = parseFloat(price);
 
@@ -54,7 +56,11 @@ export const getCattles = async (req: Request, res: Response) => {
     const responseHandler = new ResponseHandler();
 
     try {
-        const cattles = await prisma.cattle.findMany({include:{farm: true}});
+        const {farmId} = req.params
+        const cattles = await prisma.cattle.findMany({
+          where: { farmId },
+          include: { farm: true },
+        });
         responseHandler.setSuccess(StatusCodes.OK, 'Cattles fetched successfully', cattles);
         return responseHandler.send(res);
     } catch (error) {
@@ -64,13 +70,14 @@ export const getCattles = async (req: Request, res: Response) => {
 };
 
 export const getCattleById = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { cattleId } = req.params;
     const responseHandler = new ResponseHandler();
 
     try {
-        const cattle = await prisma.cattle.findUnique({
-            where: { id },
-        });
+        const {cattle} = req
+        // const cattle = await prisma.cattle.findUnique({
+        //     where: { id },
+        // });
 
         if (!cattle) {
             responseHandler.setError(StatusCodes.NOT_FOUND, 'Cattle not found');
@@ -86,13 +93,13 @@ export const getCattleById = async (req: Request, res: Response) => {
 };
 
 export const updateCattle = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { cattleId } = req.params;
     const { tagNumber, breed, gender, DOB, weight, status, location, farmId, lastCheckupDate, vaccineHistory, purchaseDate, price } = req.body;
     const responseHandler = new ResponseHandler();
 
     try {
         const updatedCattle = await prisma.cattle.update({
-            where: { id },
+            where: { id: cattleId },
             data: {
                 tagNumber,
                 breed,
@@ -119,12 +126,12 @@ export const updateCattle = async (req: Request, res: Response) => {
 
 
 export const deleteCattle = async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { cattleId } = req.params;
     const responseHandler = new ResponseHandler();
 
     try {
         await prisma.cattle.delete({
-            where: { id },
+            where: { id:cattleId },
         });
         responseHandler.setSuccess(StatusCodes.OK, 'Cattle deleted successfully', null);
         return responseHandler.send(res);

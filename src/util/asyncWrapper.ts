@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 type AsyncMiddleware = (
   req: Request,
   res: Response,
-  next?: NextFunction
+  next: NextFunction
 ) => Promise<any>;
 
 type ReturnedFunc = (

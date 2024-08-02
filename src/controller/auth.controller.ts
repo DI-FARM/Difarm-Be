@@ -9,14 +9,17 @@ import { generateEmailVerificationToken, generateForgotPasswordToken, verifyToke
 import { UserI } from "../interface/user.interface";
 import userService from "../service/user.service";
 import templateMails from "../util/templateMails";
+import { Roles } from "@prisma/client";
+import { use } from "passport";
+import farmService from "../service/farm.service";
 
 const responseHandler = new ResponseHandler();
 
 export const registerUser = async (req: Request, res: Response) => {
     try {
-        const {
-            fullname, username, email, gender, phone, password
-        } = req.body;
+        const { fullname, username, email, gender, phone, password, farmId } = req.body;
+        const RequestUser = (req as any).user.data;
+        let role:Roles;
 
         const emailExist = await prisma.account.findUnique({ where: { email } });
         const phoneExist = await prisma.account.findUnique({ where: { phone } });
@@ -37,11 +40,18 @@ export const registerUser = async (req: Request, res: Response) => {
             return responseHandler.send(res);
         }
 
+        if (RequestUser.role === Roles.SUPERADMIN) {
+            role = Roles.ADMIN
+        }
+        else{
+            role = Roles.MANAGER
+        }
         const userAccount = await prisma.account.create({
             data: {
                 username,
                 email,
                 phone,
+                role,
                 password: await hashPassword(password)
             }
         });
@@ -52,6 +62,13 @@ export const registerUser = async (req: Request, res: Response) => {
             gender
         };
         const user = await prisma.user.create({ data: userData });
+
+        if (RequestUser.role === Roles.ADMIN) {
+            const body = {
+                managerId: user.id
+            }
+            await farmService.updateFarm(farmId,body)
+        }
 
         const verificationToken = generateEmailVerificationToken({ userId: user.id });
 
@@ -184,7 +201,7 @@ export const checkAuth = (req: Request, res: Response) => {
     }
 };
 
-export const forgotPassword = async(req: Request, res: Response) => {
+export const forgotPassword = async(req: Request, res: Response,_next:NextFunction) => {
 const {email}= req.body
 const user = await userService.getUserByEmail(email)
 if (!user) {
@@ -204,7 +221,7 @@ return res
   .json({ message: `we have sent password reset link to your email ${email}` });
 };
 
-export const resetPassword = async (req: Request, res: Response) => {
+export const resetPassword = async (req: Request, res: Response,_next:NextFunction) => {
   const { token } = req.params;
   if (!token) {
     return res.status(StatusCodes.NOT_FOUND).json({

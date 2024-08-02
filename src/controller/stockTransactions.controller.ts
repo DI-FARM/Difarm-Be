@@ -3,6 +3,7 @@ import ResponseHandler from '../util/responseHandler';
 import { StatusCodes } from 'http-status-codes';
 import { TransactionEnum } from '../util/enum/StockTrans.enum';
 import { PrismaClient } from '@prisma/client';
+import stockTransactionService from "../service/stockTransaction.service";
 
 const responseHandler = new ResponseHandler();
 
@@ -10,17 +11,18 @@ const prisma = new PrismaClient();
 
 export const createTransaction = async (req: Request, res: Response) => {
   const { stockId, quantity, type } = req.body;
-  const { userId } = (req as any).user.data;
+  // const { userId } = (req as any).user.data;
 
   try {
-    const userFarm = await prisma.farm.findFirst({
-      where: { ownerId: userId },
-    });
+    // const userFarm = await prisma.farm.findFirst({
+    //   where: { ownerId: userId },
+    // });
+    const userFarm = req.farm
 
-    if (!userFarm) {
-      responseHandler.setError(StatusCodes.NOT_FOUND, 'Farm not found for the logged-in user.');
-      return responseHandler.send(res);
-    }
+    // if (!userFarm) {
+    //   responseHandler.setError(StatusCodes.NOT_FOUND, 'Farm not found for the logged-in user.');
+    //   return responseHandler.send(res);
+    // }
 
     const stock = await prisma.stock.findUnique({ where: { id: stockId } });
 
@@ -73,15 +75,17 @@ export const createTransaction = async (req: Request, res: Response) => {
 
 export const getAllTransactions = async (req: Request, res: Response) => {
   const user = (req as any).user.data;
+  const {farmId} = req.params
 
   try {
     let transactions;
 
-    const farms = await prisma.farm.findMany({
-      where: { ownerId: user.userId },
-      include: { transactions: { include: { stock: true } } },
-    });
-    transactions = farms.flatMap(farm => farm.transactions);
+    // const farms = await prisma.farm.findMany({
+    //   where: { ownerId: user.userId },
+    //   include: { transactions: { include: { stock: true } } },
+    // });
+    // transactions = farms.flatMap(farm => farm.transactions);
+    transactions = await stockTransactionService.getAllStocksTransaction(farmId)
 
     responseHandler.setSuccess(StatusCodes.OK, 'Transactions retrieved successfully.', transactions);
   } catch (error) {
@@ -94,7 +98,8 @@ export const getTransactionById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const transaction = await prisma.transaction.findUnique({ where: { id } });
+    // const transaction = await prisma.transaction.findUnique({ where: { id } });
+    const transaction = req.stockTransaction
 
     if (!transaction) {
       responseHandler.setError(StatusCodes.NOT_FOUND, 'Transaction not found.');
