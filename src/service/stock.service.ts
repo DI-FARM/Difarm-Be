@@ -1,9 +1,12 @@
 import prisma from "../db/prisma";
 
-const getAllStocks = async (farmId: string) => {
+const getAllStocks = async (farmId: string,skip: number, take: number) => {
   const result = await prisma.stock.findMany({
     where: { farmId },
     include: { farm: true },
+    orderBy: { createdAt: 'desc' },
+    skip,
+    take,
   });
   return result;
 };

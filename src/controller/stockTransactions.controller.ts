@@ -76,19 +76,30 @@ export const createTransaction = async (req: Request, res: Response) => {
 export const getAllTransactions = async (req: Request, res: Response) => {
   const user = (req as any).user.data;
   const {farmId} = req.params
+  const { page = 1, pageSize = 10 } = req.query;
+  const skip = (Number(page) - 1) * Number(pageSize);
+  const take = Number(pageSize);2
 
   try {
     let transactions;
 
-    // const farms = await prisma.farm.findMany({
-    //   where: { ownerId: user.userId },
-    //   include: { transactions: { include: { stock: true } } },
-    // });
-    // transactions = farms.flatMap(farm => farm.transactions);
-    transactions = await stockTransactionService.getAllStocksTransaction(farmId)
+    transactions = await stockTransactionService.getAllStocksTransaction(farmId, skip, take)
+    const farms = await prisma.farm.findMany({
+      where: { ownerId: user.userId },
+    });
 
-    responseHandler.setSuccess(StatusCodes.OK, 'Transactions retrieved successfully.', transactions);
+
+    // const totalCount = await prisma.transaction.count({
+    //   where: { farmId: { in: farmIds } },
+    // });
+
+    responseHandler.setSuccess(StatusCodes.OK, 'Transactions retrieved successfully.', {
+      transactions,
+      // totalPages: Math.ceil(totalCount / Number(pageSize)),
+      currentPage: Number(page),
+    });
   } catch (error) {
+    console.error(error);
     responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while retrieving transactions.');
   }
   responseHandler.send(res);
