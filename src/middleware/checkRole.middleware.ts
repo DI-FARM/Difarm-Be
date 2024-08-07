@@ -8,7 +8,6 @@ const checkRole = (requiredRoles: string[]) => {
             const userId = (req as any).user.data.id;
 
             const user = await prisma.account.findUnique({ where: {id: userId}});
-            console.log(req.user);
             
 
             if (!user || !requiredRoles.includes(user.role)) {

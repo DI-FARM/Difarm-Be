@@ -51,7 +51,6 @@ passport.use(new LocalStrategy({
       role,
       status
     }
-    console.log(userDataPayLoad.username);
     const token = generateToken(userDataPayLoad);
     return done(null, { userFound: userFound, token });
   } catch (error) {

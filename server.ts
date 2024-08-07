@@ -7,7 +7,7 @@ import router from './src/router';
 import ErrorHandler from './src/middleware/errorHandler.middleware';
 import './src/config/passportLocal'
 import dotenv from 'dotenv';
-
+import globalTypes from './src/index'; //this line imports extended express request object
 
 
 dotenv.config();

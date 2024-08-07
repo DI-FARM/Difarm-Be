@@ -1,15 +1,49 @@
-import { Router } from 'express';
-import { createTransaction, getAllTransactions, getTransactionById, updateTransaction, deleteTransaction } from '../../controller/stockTransactions.controller';
-import checkRole  from '../../middleware/checkRole.middleware';
-import { Roles } from '../../util/enum/Roles.enum';
-import transactionValidation from "../../middleware/stockTransValidation.middleware"
+import { Router } from "express";
+import {
+  createTransaction,
+  getAllTransactions,
+  getTransactionById,
+  updateTransaction,
+  deleteTransaction,
+} from "../../controller/stockTransactions.controller";
+import checkRole from "../../middleware/checkRole.middleware";
+import { Roles } from "../../util/enum/Roles.enum";
+import stockTransMiddleware from "../../middleware/stockTrans.middleware";
+import asyncWrapper from "../../util/asyncWrapper";
+import farmMiddleware from "../../middleware/farm.middleware";
 
 const router = Router();
 
-router.post('/', checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),  transactionValidation,  createTransaction);
-router.get('/', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), getAllTransactions);
-router.get('/:id', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), getTransactionById);
-router.put('/:id', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), updateTransaction);
-router.delete('/:id', checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]), deleteTransaction);
+router.post(
+  "/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  stockTransMiddleware.validationMiddleware,
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  createTransaction
+);
+router.get(
+  "/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getAllTransactions
+);
+router.get(
+  "/transaction/:id",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(stockTransMiddleware.checkStockTransactionExists),
+  getTransactionById
+);
+router.put(
+  "/:id",
+  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(stockTransMiddleware.checkStockTransactionExists),
+  updateTransaction
+);
+router.delete(
+  "/:id",
+  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(stockTransMiddleware.checkStockTransactionExists),
+  deleteTransaction
+);
 
 export default router;

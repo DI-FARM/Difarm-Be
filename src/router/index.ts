@@ -4,7 +4,10 @@ import userRoutes from './routes/user.routes'
 import farmRoute from './routes/farm.routes'
 import cattleRoute from './routes/cattle.routes'
 import productionRoute from './routes/production.routes'
+import productionTotalsRoute from './routes/productionTotals.routes'
+import prodTransaction from './routes/productionTransaction.routes'
 import stockRoute from './routes/stock.routes'
+import wasteLogRoute from './routes/wasteLog.routes'
 import stockTransactionsRoute from './routes/stockTransaction.routes'
 import isAuthorized from '../middleware/isAuthorized.middleware';
 
@@ -15,6 +18,9 @@ routes.use('/users', isAuthorized, userRoutes);
 routes.use('/farms', isAuthorized, farmRoute)
 routes.use('/cattles', isAuthorized, cattleRoute)
 routes.use('/productions', isAuthorized, productionRoute)
+routes.use('/production-totals', isAuthorized, productionTotalsRoute)
+routes.use('/production-transaction', isAuthorized, prodTransaction)
+routes.use('/waste-logs', isAuthorized, wasteLogRoute)
 routes.use('/stocks', isAuthorized, stockRoute)
 routes.use('/stock-transactions', isAuthorized, stockTransactionsRoute)
 

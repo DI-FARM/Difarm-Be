@@ -63,6 +63,7 @@ model Farm {
   size        Float    // Size of the farm in acres or hectares
   type        String   // Type of farm (e.g., crop, livestock, mixed)
   ownerId     String   
+  managerId   String?
   status      Boolean  @default(true)   
 
   createdAt   DateTime @default(now())
@@ -72,6 +73,9 @@ model Farm {
   cattle      Cattle[] @relation("FarmToCattle")
 
   productions Production[]
+  wasteLogs   WastesLog[]
+  productionTotals  ProductionTotals[]
+  productionTransactions ProductionTransaction[]
 
   stocks      Stock[]
   transactions Transaction[]
@@ -109,6 +113,7 @@ enum CattleStatus {
   HEALTHY
   SICK
   SOLD
+  PROCESSED
 }
 
 model Production {
@@ -127,6 +132,63 @@ model Production {
 
   @@index([farmId])
   @@index([cattleId])
+}
+
+model ProductionTransaction {
+  id              String   @id @default(uuid())
+  farmId          String
+  productType     ProductType
+  total           Float
+  quantity        Float
+  value           Float
+  date            DateTime  @default(now())
+  consumer        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  farm            Farm     @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+}
+
+model ProductionTotals {
+  id           String      @id @default(uuid())
+  farmId       String
+  productType  ProductType
+  totalQuantity  Float    @default(0.0)
+  pricePerUnit  Float    @default(0.0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  farm         Farm        @relation(fields: [farmId], references: [id])
+
+  @@unique([farmId, productType])
+}
+
+enum ProductType {
+  MILK
+  MEAT
+  DUNG
+  LIQUIDMANURE
+}
+
+model WastesLog {
+  id              String   @id @default(uuid())
+  farmId          String
+  type            WasteType
+  quantity        Int
+  date            DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  farm            Farm     @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+}
+
+enum WasteType {
+  DUNG
+  LIQUIDMANURE
 }
 
 model Stock {

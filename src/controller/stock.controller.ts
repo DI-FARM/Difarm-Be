@@ -3,17 +3,19 @@ import ResponseHandler from '../util/responseHandler';
 import { Roles } from '../util/enum/Roles.enum';
 import prisma from '../db/prisma';
 import { StatusCodes } from 'http-status-codes';
+import stockService from "../service/stock.service";
 
 const responseHandler = new ResponseHandler();
 
 export const createStock = async (req: Request, res: Response) => {
   const { name, quantity } = req.body;
-  const userId = (req as any).user.data.userId;
+  // const userId = (req as any).user.data.userId;
 
   try {
-    const userFarm = await prisma.farm.findFirst({
-      where: { ownerId: userId },
-    });
+    const userFarm = req.farm
+    // const userFarm = await prisma.farm.findFirst({
+    //   where: { ownerId: userId },
+    // });
 
     if (!userFarm) {
       responseHandler.setError(StatusCodes.NOT_FOUND, 'Farm not found for the logged-in user.');
@@ -36,16 +38,17 @@ export const createStock = async (req: Request, res: Response) => {
 };
 
 export const getAllStocks = async (req: Request, res: Response) => {
-  const user = (req as any).user.data;
-
+  // const user = (req as any).user.data;
+  const {farmId} = req.params
   try {
     let stocks;
 
-    const farms = await prisma.farm.findMany({
-      where: { ownerId: user.useId },
-      include: { stocks: true },
-    });
-    stocks = farms.flatMap(farm => farm.stocks);
+    // const farms = await prisma.farm.findMany({
+    //   where: { ownerId: user.useId },
+    //   include: { stocks: true },
+    // });
+    // stocks = farms.flatMap(farm => farm.stocks);
+    stocks = await stockService.getAllStocks(farmId);
 
     responseHandler.setSuccess(StatusCodes.OK, 'Stocks retrieved successfully.', stocks);
   } catch (error) {
@@ -58,12 +61,13 @@ export const getStockById = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const stock = await prisma.stock.findUnique({ where: { id } });
+    // const stock = await prisma.stock.findUnique({ where: { id } });
+    const stock = req.stock
 
-    if (!stock) {
-      responseHandler.setError(StatusCodes.NOT_FOUND, 'Stock not found.');
-      return responseHandler.send(res);
-    }
+    // if (!stock) {
+    //   responseHandler.setError(StatusCodes.NOT_FOUND, 'Stock not found.');
+    //   return responseHandler.send(res);
+    // }
 
     responseHandler.setSuccess(StatusCodes.OK, 'Stock retrieved successfully.', stock);
   } catch (error) {
