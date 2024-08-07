@@ -34,13 +34,13 @@ router.get(
   getCattleById
 );
 router.put(
-  "/cattleId",
+  "/:cattleId",
   checkRole([Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(cattleMiddleware.checkUserCattleExists),
   updateCattle
 );
 router.delete(
-  "/:id",
+  "/:cattleId",
   checkRole([Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(cattleMiddleware.checkUserCattleExists),
   deleteCattle
