@@ -87,6 +87,75 @@ export const registerUser = async (req: Request, res: Response) => {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ status: ReasonPhrases.INTERNAL_SERVER_ERROR, error: 'Server error' });
     }
 };
+export const registerSuperAdmin = async (req: Request, res: Response) => {
+  try {
+    const { fullname, username, email, gender, phone, password } = req.body;
+    const emailExist = await prisma.account.findUnique({ where: { email } });
+    const phoneExist = await prisma.account.findUnique({ where: { phone } });
+    const accountExist = await prisma.account.findUnique({
+      where: { username },
+    });
+
+    if (emailExist) {
+      responseHandler.setError(
+        StatusCodes.BAD_REQUEST,
+        "An account with this email address already exists."
+      );
+      return responseHandler.send(res);
+    }
+    if (phoneExist) {
+      responseHandler.setError(
+        StatusCodes.BAD_REQUEST,
+        "An account with this phone address already exists."
+      );
+      return responseHandler.send(res);
+    }
+    if (username && accountExist) {
+      responseHandler.setError(
+        StatusCodes.BAD_REQUEST,
+        "An account with this  username already exists."
+      );
+      return responseHandler.send(res);
+    }
+
+    const userAccount = await prisma.account.create({
+      data: {
+        username,
+        email,
+        phone,
+        role: "SUPERADMIN",
+        password: await hashPassword(password),
+      },
+    });
+
+    const userData = {
+      accountId: userAccount.id,
+      fullname,
+      gender,
+    };
+    const user = await prisma.user.create({ data: userData });
+    const verificationToken = generateEmailVerificationToken({
+      userId: user.id,
+    });
+
+    const verificationUrl = `http://yourdomain.com/verify-email?token=${verificationToken}`;
+    const emailMessage = `Please verify your email by clicking the following link: ${verificationUrl}`;
+    await sendEmail(email, "Email Verification", emailMessage);
+    responseHandler.setSuccess(
+      StatusCodes.CREATED,
+      "Registration successful. Please check your email to verify your account.",
+      user
+    );
+    return responseHandler.send(res);
+  } catch (error) {
+    return res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({
+        status: ReasonPhrases.INTERNAL_SERVER_ERROR,
+        error: "Server error",
+      });
+  }
+};
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
         const users = await prisma.user.findMany({
