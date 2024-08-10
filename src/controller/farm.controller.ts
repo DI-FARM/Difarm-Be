@@ -46,13 +46,16 @@ export const getFarms = async (req: Request, res: Response) => {
     let farms;
     if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
        farms = await prisma.farm.findMany({
-        where: { OR: [{ ownerId: user.userId, managerId: user.userId }] },
+        where: { OR: [{ ownerId: user.userId}, {managerId: user.userId }] },
         include: { owner: true },
       });
     }
-    farms = await prisma.farm.findMany({
-      include: { owner: true },
-    });
+    else{
+      farms = await prisma.farm.findMany({
+        include: { owner: true },
+      });
+    }
+
     responseHandler.setSuccess(200, "Farms retrieved successfully", farms);
   } catch (error) {
     responseHandler.setError(500, "Error fetching farms");

@@ -1,8 +1,8 @@
 import prisma from "../db/prisma";
 
 const getUserFarmById = async (farmId: string, userId: string) => {
-  const result = await prisma.farm.findFirst({
-    where: { id: farmId, OR: [{ ownerId: userId, managerId: userId }] },
+  const result = await prisma.farm.findUnique({
+    where: { id: farmId, OR: [{ ownerId: userId}, {managerId: userId }] },
   });
   return result;
 };
