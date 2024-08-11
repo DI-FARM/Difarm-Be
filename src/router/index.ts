@@ -10,6 +10,9 @@ import stockRoute from './routes/stock.routes'
 import wasteLogRoute from './routes/wasteLog.routes'
 import stockTransactionsRoute from './routes/stockTransaction.routes'
 import isAuthorized from '../middleware/isAuthorized.middleware';
+import vaccinationRoute from '../router/routes/vaccination.routes';
+import veterinarianRoute from '../router/routes/veterinarian.routes';
+import inserminationRoute from '../router/routes/insermination.routes'
 
 const routes = express.Router();
 
@@ -23,5 +26,8 @@ routes.use('/production-transaction', isAuthorized, prodTransaction)
 routes.use('/waste-logs', isAuthorized, wasteLogRoute)
 routes.use('/stocks', isAuthorized, stockRoute)
 routes.use('/stock-transactions', isAuthorized, stockTransactionsRoute)
+routes.use('/vaccinations', isAuthorized, vaccinationRoute)
+routes.use('/veterinarians', isAuthorized, veterinarianRoute)
+routes.use('/inserminations', isAuthorized, inserminationRoute)
 
 export default routes;

@@ -79,6 +79,9 @@ model Farm {
 
   stocks      Stock[]
   transactions Transaction[]
+  vaccinations  Vaccination[]
+  inseminations  Insemination[]
+  veterinarians  Veterinarian[]
 
   @@index([ownerId])
 }
@@ -105,6 +108,8 @@ model Cattle {
   farm             Farm         @relation("FarmToCattle", fields: [farmId], references: [id])
 
   productions      Production[]
+  vaccinations  Vaccination[]
+  inseminations  Insemination[]
 
   @@index([farmId])
 }
@@ -195,12 +200,22 @@ model Stock {
   id          String     @id @default(uuid())
   name        String     @unique
   quantity    Int
+  type        StockType
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   farmId      String
   farm        Farm       @relation(fields: [farmId], references: [id])
 
   transactions Transaction[]
+}
+
+enum StockType {
+  FOOD
+  MEDICATION
+  CONSTRUCTION
+  WATER
+  FEED_ACCESSORIES
+  HYGIENE_MATERIALS
 }
 
 model Transaction {
@@ -222,3 +237,57 @@ enum TransactionType {
   CONSUME
 }
 
+model Vaccination {
+  id           String       @id @default(uuid())
+  cattleId     String
+  farmId       String?       @default(uuid())
+  date         DateTime     @default(now())
+  vaccineType  String
+  vetId        String?
+  veterinarian Veterinarian? @relation(fields: [vetId], references: [id])
+  cattle          Cattle   @relation(fields: [cattleId], references: [id])
+  farm        Farm?     @relation(fields: [farmId], references: [id])
+
+
+
+  @@map("vaccinations")
+  @@index([cattleId])
+  @@index([vetId])
+  @@index([farmId])
+}
+
+model Veterinarian {
+  id            String         @id @default(uuid())
+  name          String
+  farmId       String?          @default(uuid())
+  phone         String
+  email         String         @unique
+  vaccinations  Vaccination[]
+  inseminations Insemination[]
+  farm        Farm?     @relation(fields: [farmId], references: [id])
+
+
+  @@map("veterinarians")
+  @@index([farmId])
+
+}
+
+model Insemination {
+  id           String       @id @default(uuid())
+  cattleId     String
+  farmId       String?       @default(uuid())
+  date         DateTime     @default(now())
+  method       String
+  type         String
+  vetId        String?
+  veterinarian Veterinarian? @relation(fields: [vetId], references: [id])
+  cattle          Cattle   @relation(fields: [cattleId], references: [id])
+  farm        Farm?     @relation(fields: [farmId], references: [id])
+
+
+  @@map("inseminations")
+  @@index([cattleId])
+  @@index([vetId])
+  @@index([farmId])
+
+}

@@ -1,4 +1,4 @@
-import { Cattle, Farm, Production, ProductType, Stock, Transaction } from "@prisma/client";
+import { Cattle, Farm, Insemination, Production, ProductType, Stock, Transaction, Vaccination, Veterinarian } from "@prisma/client";
 
 
 declare global {
@@ -15,7 +15,10 @@ declare global {
       farm: Farm,
       cattle: Cattle,
       stock: Stock,
-      stockTransaction: Transaction
+      stockTransaction: Transaction,
+      vaccine: Vaccination,
+      veterian: Veterinarian,
+      insemination: Insemination
     }
   }
 }

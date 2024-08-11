@@ -5,7 +5,7 @@ import { Roles } from '../../util/enum/Roles.enum';
 
 const router = Router();
 
-router.post('/', checkRole([Roles.SUPERADMIN]), createUser);
+router.post('/', checkRole([Roles.SUPERADMIN,  Roles.ADMIN]), createUser);
 router.get('/', checkRole([Roles.SUPERADMIN, Roles.ADMIN]), getAllUsers);
 router.get('/:id', checkRole([Roles.SUPERADMIN, Roles.ADMIN]), getUserById);
 router.put('/:id', checkRole([Roles.SUPERADMIN]), updateUser);

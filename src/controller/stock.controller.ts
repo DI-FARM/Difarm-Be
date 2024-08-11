@@ -8,7 +8,7 @@ import stockService from "../service/stock.service";
 const responseHandler = new ResponseHandler();
 
 export const createStock = async (req: Request, res: Response) => {
-  const { name, quantity } = req.body;
+  const { name, quantity, type } = req.body;
   // const userId = (req as any).user.data.userId;
 
   try {
@@ -27,6 +27,7 @@ export const createStock = async (req: Request, res: Response) => {
         name,
         quantity: quantityFloat,
         farmId: userFarm.id,
+        type
       },
     });
 
@@ -42,20 +43,24 @@ export const getAllStocks = async (req: Request, res: Response) => {
   const {farmId} = req.params
   try {
     let stocks;
+    const { page = 1, pageSize = 10 } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+    const take = Number(pageSize);
+    stocks = await stockService.getAllStocks(farmId,skip,take);
 
-    // const farms = await prisma.farm.findMany({
-    //   where: { ownerId: user.useId },
-    //   include: { stocks: true },
-    // });
-    // stocks = farms.flatMap(farm => farm.stocks);
-    stocks = await stockService.getAllStocks(farmId);
 
-    responseHandler.setSuccess(StatusCodes.OK, 'Stocks retrieved successfully.', stocks);
+    responseHandler.setSuccess(StatusCodes.OK, 'Stocks retrieved successfully.', {
+      stocks,
+      // totalPages: Math.ceil(totalCount / Number(pageSize)),
+      currentPage: Number(page),
+    });
   } catch (error) {
+    console.error(error);
     responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while retrieving stocks.');
   }
   responseHandler.send(res);
 };
+
 
 export const getStockById = async (req: Request, res: Response) => {
   const { id } = req.params;

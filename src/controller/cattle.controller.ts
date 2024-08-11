@@ -54,16 +54,32 @@ export const createCattle = async (req: Request, res: Response) => {
 
 export const getCattles = async (req: Request, res: Response) => {
     const responseHandler = new ResponseHandler();
+    const { page = 1, pageSize = 10 } = req.query;
+    const skip = (Number(page) - 1) * Number(pageSize);
+    const take = Number(pageSize);
 
     try {
         const {farmId} = req.params
         const cattles = await prisma.cattle.findMany({
           where: { farmId },
           include: { farm: true },
+          orderBy: {
+            createdAt: 'desc',
+        },
+        skip,
+        take
         });
-        responseHandler.setSuccess(StatusCodes.OK, 'Cattles fetched successfully', cattles);
+
+        const totalCount = await prisma.cattle.count();
+
+        responseHandler.setSuccess(StatusCodes.OK, 'Cattles fetched successfully', {
+            cattles,
+            totalPages: Math.ceil(totalCount / Number(pageSize)),
+            currentPage: Number(page),
+        });
         return responseHandler.send(res);
     } catch (error) {
+        console.error(error);
         responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error fetching cattles');
         return responseHandler.send(res);
     }
