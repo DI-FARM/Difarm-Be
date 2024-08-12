@@ -19,6 +19,7 @@ const addTransaction = async (
     ...req.body,
     farmId,
     value: amountValue,
+    productType,
     total: req.productInfo?.totalQuantity,
   };
   const data = await productionTransactionService.recordTransaction(body);
