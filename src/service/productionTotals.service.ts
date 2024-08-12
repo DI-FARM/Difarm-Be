@@ -26,6 +26,7 @@ const getFarmProductionTotalAmounts = async (farmId: string) => {
       farmId,
     },
     select: {
+      id: true,
       productType: true,
       totalQuantity: true,
       pricePerUnit: true,
