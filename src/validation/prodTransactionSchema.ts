@@ -3,7 +3,7 @@ import Joi from 'joi';
 const newTransactionSchame = Joi.object({
     productType: Joi.string().valid('MILK','MEAT').required(),
     quantity: Joi.number().greater(0).required(),
-    date: Joi.date().iso().required(),
+    date: Joi.date().iso(),
     consumer: Joi.string().required()
 });
 const updateTransactionSchame = Joi.object({
