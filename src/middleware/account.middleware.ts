@@ -1,24 +1,26 @@
 import { NextFunction, Response, Request } from "express";
+import farmService from "../service/farm.service";
 import ResponseHandler from "../util/responseHandler";
 import { StatusCodes } from "http-status-codes";
+import { Farm, Roles } from "@prisma/client";
 import userService from "../service/user.service";
 
 const responseHandler = new ResponseHandler();
 
-const checkUserExists = async (
+const checkAccountExists = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const { userId } = req.params;
+  const { accId } = req.params;
   const user = (req as any).user.data;
-  const data = await userService.getUserById(userId);
+  const data = await userService.getAccountById(accId);
 
   if (!data) {
-    responseHandler.setError(StatusCodes.NOT_FOUND, "User not found");
+    responseHandler.setError(StatusCodes.NOT_FOUND, "Account not found");
     return responseHandler.send(res);
   }
-  if (data.id != user.userId && user.role != "SUPERADMIN") {
+  if (data.users[0].id != user.userId) {
     responseHandler.setError(
       StatusCodes.FORBIDDEN,
       "You dont have access to this user"
@@ -29,4 +31,4 @@ const checkUserExists = async (
   next();
 };
 
-export default { checkUserExists };
+export default { checkAccountExists };
