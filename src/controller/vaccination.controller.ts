@@ -41,7 +41,7 @@ export const getAllVaccinations = async (req: Request, res: Response) => {
         vaccinations = await prisma.vaccination.findMany({
           where:{farmId},
           orderBy: { date: "desc" },
-          include:{cattle:true},
+          include:{cattle:true,veterinarian:true},
           skip,
           take,
         });

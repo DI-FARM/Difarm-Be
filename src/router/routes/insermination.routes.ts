@@ -16,25 +16,25 @@ const router = Router();
 
 router.post(
   "/",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   inserminationValidationMiddleware,
   recordInsemination
 );
 router.get(
   "/:farmId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   getAllInseminations
 );
 router.get(
   "insemination/:inseminationId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN,  Roles.MANAGER]),
   asyncWrapper(inseminationMiddleware.checkInseminationExists),
   getInseminationById
 );
 router.put(
   "/:inseminationId",
-  checkRole([Roles.SUPERADMIN]),
+  checkRole([Roles.MANAGER, Roles.ADMIN,Roles.SUPERADMIN]),
   asyncWrapper(inseminationMiddleware.checkInseminationExists),
   updateInsemination
 );

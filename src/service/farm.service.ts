@@ -20,4 +20,17 @@ const updateFarm = async (farmId: string,data:any) => {
   return result;
 };
 
-export default { getUserFarmById, getSingleFarm, updateFarm };
+async function removeManagerFromFarm(id: string) {
+  const result = await prisma.farm.updateMany({
+    where: { managerId: id },
+    data: { managerId: null },
+  });
+  return result;
+}
+
+export default {
+  getUserFarmById,
+  getSingleFarm,
+  updateFarm,
+  removeManagerFromFarm,
+};

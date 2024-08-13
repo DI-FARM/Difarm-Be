@@ -42,7 +42,7 @@ export const getAllInseminations = async (req: Request, res: Response) => {
       if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
         inseminations = await prisma.insemination.findMany({
          where: { farmId},
-         include: { cattle: true },
+         include: { cattle: true,veterinarian: true },
          orderBy: { date: 'desc' }, 
          skip,
          take,
