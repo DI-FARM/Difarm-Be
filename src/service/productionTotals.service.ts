@@ -39,6 +39,7 @@ const createProductInfo = async (data: any) => {
   return result;
 };
 const updateProductInfo = async (infoId: any, data: any) => {
+  console.log(infoId,data)
   const result = await prisma.productionTotals.update({
     where: { id: infoId },
     data,
@@ -58,6 +59,13 @@ const singleProductInfo = async (infoId: any) => {
   });
   return result;
 };
+const prodInfo = async (farmId:string, productType:ProductType) => {
+  const result = await prisma.productionTotals.findFirst({
+    where: { farmId, productType },
+    include:{farm:true}
+  });
+  return result;
+};
 
 export default {
   recordAmount,
@@ -65,5 +73,6 @@ export default {
   createProductInfo,
   updateProductInfo,
   deleteProductInfo,
-  singleProductInfo
+  singleProductInfo,
+  prodInfo
 };

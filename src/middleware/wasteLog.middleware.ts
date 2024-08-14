@@ -16,6 +16,8 @@ const checkWasteLogExists = async(req:Request,res:Response,next:NextFunction)=>{
         );
         return responseHandler.send(res);
       }
+      req.wasteLog = data;
+
       next();
 
 }

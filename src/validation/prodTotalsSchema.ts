@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 const newProdInfoSchema = Joi.object({
-    productType: Joi.string().valid('MILK','MEAT').required(),
+    productType: Joi.string().valid('MILK','MEAT','DUNG','LIQUIDMANURE').required(),
     totalQuantity: Joi.number().greater(0).required(),
     pricePerUnit: Joi.number().greater(0).required(),
 });
