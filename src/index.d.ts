@@ -1,4 +1,4 @@
-import { Cattle, Farm, Insemination, Production, ProductType, Stock, Transaction, Vaccination, Veterinarian,User } from "@prisma/client";
+import { Cattle, Farm, Insemination, Production, ProductType, Stock, Transaction, Vaccination, Veterinarian,User, ProductionTransaction, WastesLog } from "@prisma/client";
 import { UserI } from './interface/user.interface';
 
 
@@ -10,7 +10,7 @@ declare global {
         totalQuantity: number;
         pricePerUnit: number;
       },
-      transaction:any,
+      transaction:ProductionTransaction,
       productInfo: any,
       production: Production,
       farm: Farm,
@@ -21,6 +21,7 @@ declare global {
       veterian: Veterinarian,
       insemination: Insemination,
       actionUser:any
+      wasteLog: WastesLog
     }
   }
 }

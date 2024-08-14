@@ -65,6 +65,25 @@ const updateTransactions = async (
   _next: NextFunction
 ) => {
   const { transactionId } = req.params;
+  const {farmId, productType} = req.transaction
+  const {quantity} = req.body
+
+  if (quantity) {
+    console.log(req.transaction.quantity, quantity)
+    const updatedQuantity = req.transaction.quantity - quantity
+    const productInfo = await productionTotalsService.prodInfo(farmId, productType)
+    if (productInfo) {
+      if (updatedQuantity + productInfo.totalQuantity < 0) {
+        responseHandler.setError(
+          StatusCodes.NOT_ACCEPTABLE,
+          "You have less items left for this product"
+        );
+        return responseHandler.send(res);
+      }
+      await productionTotalsService.recordAmount(farmId,productType,updatedQuantity)
+    }
+  }
+
   const data = await productionTransactionService.updateTransactions(
     transactionId,
     req.body

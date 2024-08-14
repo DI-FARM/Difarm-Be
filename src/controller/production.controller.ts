@@ -5,6 +5,7 @@ import { Roles } from '../util/enum/Roles.enum';
 import { StatusCodes } from 'http-status-codes';
 import cattleService from "../service/cattle.service";
 import productionTotalsService from "../service/productionTotals.service";
+import { ProductType } from "@prisma/client";
 
 const responseHandler = new ResponseHandler();
 
@@ -105,7 +106,7 @@ export const getProductionById = async (req: Request, res: Response) => {
 export const updateProduction = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { productName, quantity, productionDate, expirationDate } = req.body;
-    // const userId = (req as any).user.data.id;
+    const {farmId, quantity: previousQuantity, productName: prodType} = req.production
 
     try {
         const updatedProduction = await prisma.production.update({
@@ -118,6 +119,17 @@ export const updateProduction = async (req: Request, res: Response) => {
             },
             include: { cattle: true },
         });
+        if (quantity) {
+            if (previousQuantity > quantity) {
+                const updatedQuantity = previousQuantity - quantity
+                await productionTotalsService.recordAmount(farmId,prodType as ProductType ,-updatedQuantity)
+            }
+            else{
+                const updatedQuantity = quantity - previousQuantity
+                await productionTotalsService.recordAmount(farmId,prodType as ProductType ,updatedQuantity)
+            }
+          }
+
         responseHandler.setSuccess(StatusCodes.OK, 'Production record updated successfully.', updatedProduction);
     } catch (error) {
         responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while updating the production record.');
