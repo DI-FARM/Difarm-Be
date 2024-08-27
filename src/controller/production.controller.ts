@@ -77,7 +77,7 @@ export const getAllProductions = async (req: Request, res: Response) => {
         } else if (user.role === Roles.ADMIN) {
              productions = await prisma.production.findMany({
                 where: { farmId },
-                include: { farm: { include: { cattle: true } } },
+                include: { cattle: true },
             });
             // productions = farms.flatMap(farm => farm.productions);
         } else {
