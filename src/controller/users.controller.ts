@@ -41,7 +41,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
     } else {
       const userFarm = await prisma.farm.findUnique({
         where: { id: farmId },
-        include: { owner: true },
+        include: { owner: {include:{account: true}} },
       });
 
       users.push(userFarm?.owner);
