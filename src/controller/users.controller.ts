@@ -37,7 +37,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
   let users = []
   try {
     if (user.role == Roles.SUPERADMIN) {
-      users = await prisma.user.findMany({ include: { farms: true } });
+      users = await prisma.user.findMany({ include: {account: true}});
     } else {
       const userFarm = await prisma.farm.findUnique({
         where: { id: farmId },
