@@ -55,8 +55,11 @@ export const createCattle = async (req: Request, res: Response) => {
 export const getCattles = async (req: Request, res: Response) => {
     const responseHandler = new ResponseHandler();
     const { page = 1, pageSize = 10 } = req.query;
-    const skip = (Number(page) - 1) * Number(pageSize);
-    const take = Number(pageSize);
+    const currentPage = Math.max(1, Number(page) || 1); // Ensure page is at least 1
+    const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); // Ensure pageSize is between 1 and 100
+
+    const skip = (currentPage - 1) * currentPageSize;
+    const take = currentPageSize;
 
     try {
         const {farmId} = req.params
