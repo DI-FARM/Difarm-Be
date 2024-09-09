@@ -12,6 +12,7 @@ import templateMails from "../util/templateMails";
 import { Roles } from "@prisma/client";
 import { use } from "passport";
 import farmService from "../service/farm.service";
+import { paginate } from "../util/paginate";
 
 const responseHandler = new ResponseHandler();
 
@@ -157,22 +158,33 @@ export const registerSuperAdmin = async (req: Request, res: Response) => {
   }
 };
 export const getAllUsers = async (req: Request, res: Response) => {
+    const responseHandler = new ResponseHandler();
+    const { page = 1, pageSize = 10 } = req.query;
+    const currentPage = Math.max(1, Number(page) || 1); 
+    const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); 
+  
+    const skip = (currentPage - 1) * currentPageSize;
+    const take = currentPageSize;
+  
     try {
-        const users = await prisma.user.findMany({
-            include: {
-                account: true,
-            },
-        });
-
-        responseHandler.setSuccess(StatusCodes.OK, "Users retrieved successfully", users);
-        return responseHandler.send(res);
+      const users = await prisma.user.findMany({
+        include: {
+          account: true,
+        },
+        skip,
+        take,
+      });
+      const totalCount = await prisma.user.count();
+      const paginationResult = paginate(users, totalCount, currentPage, currentPageSize);
+  
+      responseHandler.setSuccess(StatusCodes.OK, "Users retrieved successfully", paginationResult);
+      return responseHandler.send(res);
     } catch (error) {
-        console.error('Error retrieving users:', error);
-        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, "Error retrieving users");
-        return responseHandler.send(res);
+      console.error('Error retrieving users:', error);
+      responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, "Error retrieving users");
+      return responseHandler.send(res);
     }
-};
-
+  };
 
 export const emailVerification = async (req: Request, res: Response) => {
     const { token } = req.query;
@@ -183,17 +195,14 @@ export const emailVerification = async (req: Request, res: Response) => {
 
     try {
         const decoded = verifyToken(token as string, "verify-email");
-
         const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
         const account = await prisma.account.findUnique({ where: { id: user?.accountId } });
-
         if (!user) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid verification link.' });
         }
         if (!account) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid verification link.' });
         }
-
         await prisma.account.update({
             where: { id: account.id },
             data: { status: true }

@@ -2,23 +2,56 @@ import productionTotalsService from "../service/productionTotals.service";
 import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import ResponseHandler from "../util/responseHandler";
+import prisma from "../db/prisma";
+import { Roles } from "@prisma/client";
+import { paginate } from "../util/paginate";
 
 const responseHandler = new ResponseHandler();
 
-const AllFarmProdTotals = async (
-  req: Request,
-  res: Response,
-  _next: NextFunction
-) => {
+
+export const AllFarmProdTotals = async (req: Request, res: Response) => {
+  const responseHandler = new ResponseHandler();
+  const user = (req as any).user.data;
   const { farmId } = req.params;
-  const data = await productionTotalsService.getFarmProductionTotalAmounts(
-    farmId
-  );
-  responseHandler.setSuccess(
-    StatusCodes.OK,
-    "production totals retrieved successfully",
-    data
-  );
+  const { page = 1, pageSize = 10 } = req.query;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100);
+
+  const skip = (currentPage - 1) * currentPageSize;
+  const take = currentPageSize;
+
+  try {
+    let productions
+    if (user.role === Roles.SUPERADMIN) {
+      productions = await prisma.productionTotals.findMany({
+        include: { farm: true },
+        skip,
+        take,
+      });
+    } else {
+      productions = await prisma.productionTotals.findMany({
+        where: { farmId },
+        include: { farm: true },
+        skip,
+        take,
+      });
+
+    
+    }
+   
+    const totalCount = await prisma.productionTotals.count({
+      where: user.role === Roles.ADMIN ? { farmId } : {},
+    });
+
+
+    const paginationResult = paginate(productions, totalCount, currentPage, currentPageSize);
+
+    responseHandler.setSuccess(StatusCodes.OK, 'Production records retrieved successfully.', paginationResult);
+  } catch (error) {
+    console.error('Error retrieving production records:', error);
+    responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while retrieving production records.');
+  }
+
   return responseHandler.send(res);
 };
 

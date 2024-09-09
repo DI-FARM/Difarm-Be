@@ -2,8 +2,9 @@ import { Request, Response } from 'express';
 import ResponseHandler from '../util/responseHandler';
 import { StatusCodes } from 'http-status-codes';
 import { TransactionEnum } from '../util/enum/StockTrans.enum';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Roles } from '@prisma/client';
 import stockTransactionService from "../service/stockTransaction.service";
+import { paginate } from '../util/paginate';
 
 const responseHandler = new ResponseHandler();
 
@@ -75,29 +76,41 @@ export const createTransaction = async (req: Request, res: Response) => {
 
 export const getAllTransactions = async (req: Request, res: Response) => {
   const user = (req as any).user.data;
-  const {farmId} = req.params
+  const { farmId } = req.params;
   const { page = 1, pageSize = 10 } = req.query;
-  const skip = (Number(page) - 1) * Number(pageSize);
-  const take = Number(pageSize);2
+  const currentPage = Math.max(1, Number(page) || 1);
+  const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100);
+
+  const skip = (currentPage - 1) * currentPageSize;
+  const take = currentPageSize;
 
   try {
-    let transactions;
+    let stockTransactions;
 
-    transactions = await stockTransactionService.getAllStocksTransaction(farmId, skip, take)
-    const farms = await prisma.farm.findMany({
-      where: { ownerId: user.userId },
+    if (user.role === Roles.SUPERADMIN) {
+      stockTransactions = await prisma.transaction.findMany({
+        include: { farm: true ,stock:true},
+        skip,
+        take,
+      });
+    } else if (user.role === Roles.ADMIN) {
+      stockTransactions = await prisma.transaction.findMany({
+        where: { farmId },
+        include: { farm: true ,stock:true},
+        skip,
+        take,
+      });
+    } else {
+      responseHandler.setError(StatusCodes.FORBIDDEN, 'You do not have permission to view production records.');
+      return responseHandler.send(res);
+    }
+    const totalCount = await prisma.transaction.count({
+      where: user.role === Roles.ADMIN ? { farmId } : {},
     });
 
+    const paginationResult = paginate(stockTransactions, totalCount, currentPage, currentPageSize);
 
-    // const totalCount = await prisma.transaction.count({
-    //   where: { farmId: { in: farmIds } },
-    // });
-
-    responseHandler.setSuccess(StatusCodes.OK, 'Transactions retrieved successfully.', {
-      transactions,
-      // totalPages: Math.ceil(totalCount / Number(pageSize)),
-      currentPage: Number(page),
-    });
+    responseHandler.setSuccess(StatusCodes.OK, 'Transactions retrieved successfully.', paginationResult);
   } catch (error) {
     console.error(error);
     responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while retrieving transactions.');

@@ -4,6 +4,7 @@ import { Roles } from '../util/enum/Roles.enum';
 import prisma from '../db/prisma';
 import { StatusCodes } from 'http-status-codes';
 import stockService from "../service/stock.service";
+import { paginate } from '../util/paginate';
 
 const responseHandler = new ResponseHandler();
 
@@ -39,30 +40,47 @@ export const createStock = async (req: Request, res: Response) => {
 };
 
 export const getAllStocks = async (req: Request, res: Response) => {
-  // const user = (req as any).user.data;
-  const {farmId} = req.params
+  const { farmId } = req.params;
+  const user = (req as any).user.data;
+  const { page = 1, pageSize = 10 } = req.query;
+  const currentPage = Math.max(1, Number(page) || 1); // Ensure page is at least 1
+  const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); // Ensure pageSize is between 1 and 100
+  const skip = (currentPage - 1) * currentPageSize;
+  const take = currentPageSize;
+
   try {
-    let stocks;
-    const { page = 1, pageSize = 10 } = req.query;
-    const currentPage = Math.max(1, Number(page) || 1); // Ensure page is at least 1
-    const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); // Ensure pageSize is between 1 and 100
-    const skip = (currentPage - 1) * currentPageSize;
-    const take = currentPageSize;
-    stocks = await stockService.getAllStocks(farmId,skip,take);
+    let  stocks;
 
-
-    responseHandler.setSuccess(StatusCodes.OK, 'Stocks retrieved successfully.', {
-      stocks,
-      // totalPages: Math.ceil(totalCount / Number(pageSize)),
-      currentPage: Number(page),
+    if (user.role === Roles.SUPERADMIN) {
+      stocks = await prisma.stock.findMany({
+        include: { farm: true },
+        skip,
+        take,
+      });
+    } else if (user.role === Roles.ADMIN) {
+      stocks = await prisma.stock.findMany({
+        where: { farmId },
+        include: { farm: true },
+        skip,
+        take,
+      });
+    } else {
+      responseHandler.setError(StatusCodes.FORBIDDEN, 'You do not have permission to view production records.');
+      return responseHandler.send(res);
+    }
+    const totalCount = await prisma.stock.count({
+      where: user.role === Roles.ADMIN ? { farmId } : {},
     });
+    const paginationResult = paginate(stocks, totalCount, currentPage, currentPageSize);
+
+    responseHandler.setSuccess(StatusCodes.OK, 'Stocks retrieved successfully.', paginationResult);
   } catch (error) {
     console.error(error);
     responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while retrieving stocks.');
   }
-  responseHandler.send(res);
-};
 
+  return responseHandler.send(res);
+};
 
 export const getStockById = async (req: Request, res: Response) => {
   const { id } = req.params;

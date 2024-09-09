@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes';
 import cattleService from "../service/cattle.service";
 import productionTotalsService from "../service/productionTotals.service";
 import { ProductType } from "@prisma/client";
+import { paginate } from '../util/paginate';
 
 const responseHandler = new ResponseHandler();
 
@@ -66,31 +67,51 @@ export const createProduction = async (req: Request, res: Response, _next:NextFu
 };
 
 export const getAllProductions = async (req: Request, res: Response) => {
-    const user = (req as any).user.data;
-    const {farmId} = req.params
-    try {
-        let productions;
-        if (user.role === Roles.SUPERADMIN) {
-            productions = await prisma.production.findMany({
-                include: { cattle: true },
-            });
-        } else if (user.role === Roles.ADMIN) {
-             productions = await prisma.production.findMany({
-                where: { farmId },
-                include: { cattle: true },
-            });
-            // productions = farms.flatMap(farm => farm.productions);
-        } else {
-            responseHandler.setError(StatusCodes.FORBIDDEN, 'You do not have permission to view production records.');
-            return responseHandler.send(res);
-        }
+  const responseHandler = new ResponseHandler();
+  const user = (req as any).user.data;
+  const { farmId } = req.params;
+  const { page = 1, pageSize = 10 } = req.query;
+  const currentPage = Math.max(1, Number(page) || 1);
+  const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100);
 
-        responseHandler.setSuccess(StatusCodes.OK, 'Production records retrieved successfully.', productions);
-    } catch (error) {
-        responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while retrieving production records.');
+  const skip = (currentPage - 1) * currentPageSize;
+  const take = currentPageSize;
+
+  try {
+    let productions;
+
+    if (user.role === Roles.SUPERADMIN) {
+      productions = await prisma.production.findMany({
+        include: { cattle: true },
+        skip,
+        take,
+      });
+    } else if (user.role === Roles.ADMIN) {
+      productions = await prisma.production.findMany({
+        where: { farmId },
+        include: { cattle: true },
+        skip,
+        take,
+      });
+    } else {
+      responseHandler.setError(StatusCodes.FORBIDDEN, 'You do not have permission to view production records.');
+      return responseHandler.send(res);
     }
-    responseHandler.send(res);
+    const totalCount = await prisma.production.count({
+      where: user.role === Roles.ADMIN ? { farmId } : {},
+    });
+
+    const paginationResult = paginate(productions, totalCount, currentPage, currentPageSize);
+
+    responseHandler.setSuccess(StatusCodes.OK, 'Production records retrieved successfully.', paginationResult);
+  } catch (error) {
+    console.error('Error retrieving production records:', error);
+    responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'An error occurred while retrieving production records.');
+  }
+
+  return responseHandler.send(res);
 };
+
 
 export const getProductionById = async (req: Request, res: Response) => {
 

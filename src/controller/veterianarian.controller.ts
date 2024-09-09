@@ -3,6 +3,7 @@ import ResponseHandler from "../util/responseHandler";
 import prisma from "../db/prisma";
 import { StatusCodes } from "http-status-codes";
 import { Roles } from "@prisma/client";
+import { paginate } from "../util/paginate";
 
 const responseHandler = new ResponseHandler();
 
@@ -35,41 +36,46 @@ export const createVeterinarian = async (req: Request, res: Response) => {
 };
 
 export const getAllVeterinarians = async (req: Request, res: Response) => {
-  const {farmId} = req.params
-    const { page = 1, pageSize = 10 } = req.query;
-    const currentPage = Math.max(1, Number(page) || 1); // Ensure page is at least 1
-    const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); // Ensure pageSize is between 1 and 100
-    const skip = (currentPage - 1) * currentPageSize;
-    const take = currentPageSize;
-    const user = (req as any).user.data;
+  const responseHandler = new ResponseHandler();
+  const user = (req as any).user.data;
+  const { farmId } = req.params;
+  const { page = 1, pageSize = 10 } = req.query;
+  const currentPage = Math.max(1, Number(page) || 1); // Ensure page is at least 1
+  const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); // Ensure pageSize is between 1 and 100
+  const skip = (currentPage - 1) * currentPageSize;
+  const take = currentPageSize;
+
+  try {
     let veterinarians;
-    try {
-      if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
-        veterinarians = await prisma.veterinarian.findMany({
-          where: { farmId },
-          skip,
-          take,
-        });
-      } else {
-        veterinarians = await prisma.veterinarian.findMany({
-          skip,
-          take,
-        });
-      }
-      const totalCount = await prisma.veterinarian.count();
-  
-      responseHandler.setSuccess(StatusCodes.OK, 'Veterinarians retrieved successfully', {
-        veterinarians,
-        totalPages: Math.ceil(totalCount / Number(pageSize)),
-        currentPage: Number(page),
+
+    if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
+      veterinarians = await prisma.veterinarian.findMany({
+        where: { farmId },
+        skip,
+        take,
       });
-    } catch (error) {
-      console.error(error);
-      responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error retrieving veterinarians');
+    } else {
+      veterinarians = await prisma.veterinarian.findMany({
+        skip,
+        take,
+      });
     }
-  
-    return responseHandler.send(res);
-  };
+
+    const totalCount = await prisma.veterinarian.count({
+      where: user.role === Roles.ADMIN || user.role === Roles.MANAGER ? { farmId } : {},
+    });
+
+    // Use the paginate utility to structure the response
+    const paginationResult = paginate(veterinarians, totalCount, currentPage, currentPageSize);
+
+    responseHandler.setSuccess(StatusCodes.OK, 'Veterinarians retrieved successfully', paginationResult);
+  } catch (error) {
+    console.error('Error retrieving veterinarians:', error);
+    responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error retrieving veterinarians');
+  }
+
+  return responseHandler.send(res);
+};
 
 export const getVeterinarianById = async (req: Request, res: Response) => {
   // const { id } = req.params;

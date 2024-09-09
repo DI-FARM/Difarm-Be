@@ -4,6 +4,9 @@ import wasteLogsService from "../service/wasteLogs.service";
 import ResponseHandler from "../util/responseHandler";
 import { StatusCodes } from "http-status-codes";
 import productionTotalsService from "../service/productionTotals.service";
+import { Roles } from "@prisma/client";
+import prisma from "../db/prisma";
+import { paginate } from "../util/paginate";
 
 const responseHandler = new ResponseHandler();
 
@@ -30,20 +33,50 @@ const createWasteLog = async (
   return responseHandler.send(res);
 };
 
-const allWasteLogs = async (
-  req: Request,
-  res: Response,
-  _next: NextFunction
-) => {
+export const allWasteLogs = async (req: Request, res: Response, _next: NextFunction) => {
+  const responseHandler = new ResponseHandler();
   const { farmId } = req.params;
-  const updatedLogResult = await wasteLogsService.getAllWasteLogs(farmId);
-  responseHandler.setSuccess(
-    StatusCodes.CREATED,
-    "All waste-logs retrieved successfull",
-    updatedLogResult
-  );
+  const { page = 1, pageSize = 10 } = req.query;
+  const currentPage = Math.max(1, Number(page) || 1); // Ensure page is at least 1
+  const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); // Ensure pageSize is between 1 and 100
+  const skip = (currentPage - 1) * currentPageSize;
+  const take = currentPageSize;
+  const user = (req as any).user.data;
+  try {
+    let wasteLogs;
+
+    if (user.role === Roles.SUPERADMIN) {
+      wasteLogs = await prisma.wastesLog.findMany({
+        include: { farm: true },
+        skip,
+        take,
+      });
+    } else if (user.role === Roles.ADMIN) {
+      wasteLogs = await prisma.wastesLog.findMany({
+        where: { farmId },
+        include: { farm: true },
+        skip,
+        take,
+      });
+    } else {
+      responseHandler.setError(StatusCodes.FORBIDDEN, 'You do not have permission to view production records.');
+      return responseHandler.send(res);
+    }
+    const totalCount = await prisma.wastesLog.count({
+      where: user.role === Roles.ADMIN ? { farmId } : {},
+    });
+
+    const paginationResult = paginate(wasteLogs, totalCount, currentPage, currentPageSize);
+
+    responseHandler.setSuccess(StatusCodes.OK, "All waste-logs retrieved successfully", paginationResult);
+  } catch (error) {
+    console.error('Error retrieving waste logs:', error);
+    responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error retrieving waste logs');
+  }
+
   return responseHandler.send(res);
 };
+
 
 const singleWasteLog = async (
   req: Request,
