@@ -18,7 +18,7 @@ const asyncWrapper = (fn: AsyncMiddleware): ReturnedFunc => {
     try {
       await fn(req, res, next);
     } catch (error: any) {
-        next(error);
+      next(error);
     }
   };
 };
