@@ -13,34 +13,34 @@ const router = Router();
 router.post(
   "/:farmId",
   validate(prodTransactionSchema.newTransactionSchame),
-  checkRole([Roles.ADMIN]),
+  checkRole([Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   asyncWrapper(productionTransactionMiddleware.checkProductAvailable),
   asyncWrapper(productionTransactionController.addTransaction)
 );
 router.get(
   "/:farmId",
-  checkRole([Roles.SUPERADMIN,Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN,Roles.ADMIN,Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   asyncWrapper(productionTransactionController.allTransactions)
 );
 router.get(
   "/single/:transactionId",
-  checkRole([Roles.SUPERADMIN,Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN,Roles.ADMIN,Roles.MANAGER]),
   asyncWrapper(productionTransactionMiddleware.checkUserTansactionExists),
   asyncWrapper(productionTransactionController.singleTransactions)
 );
 
 router.patch(
   "/:transactionId",
-  checkRole([Roles.ADMIN]),
+  checkRole([Roles.ADMIN,Roles.MANAGER]),
   validate(prodTransactionSchema.updateTransactionSchame),
   asyncWrapper(productionTransactionMiddleware.checkUserTansactionExists),
   asyncWrapper(productionTransactionController.updateTransactions)
 );
 router.delete(
   "/:transactionId",
-  checkRole([Roles.ADMIN]),
+  checkRole([Roles.ADMIN,Roles.MANAGER]),
   asyncWrapper(productionTransactionMiddleware.checkUserTansactionExists),
   asyncWrapper(productionTransactionController.removeTransactions)
 );

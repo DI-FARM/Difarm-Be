@@ -93,7 +93,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
         skip,
         take,
       });
-    } else if (user.role === Roles.ADMIN) {
+    } else if (user.role === Roles.ADMIN,user.role === Roles.MANAGER) {
       stockTransactions = await prisma.transaction.findMany({
         where: { farmId },
         include: { farm: true ,stock:true},
@@ -101,7 +101,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
         take,
       });
     } else {
-      responseHandler.setError(StatusCodes.FORBIDDEN, 'You do not have permission to view production records.');
+      responseHandler.setError(StatusCodes.FORBIDDEN, 'You do not have permission to view stock transaction records.');
       return responseHandler.send(res);
     }
     const totalCount = await prisma.transaction.count({
