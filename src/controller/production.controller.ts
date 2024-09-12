@@ -86,7 +86,7 @@ export const getAllProductions = async (req: Request, res: Response) => {
         skip,
         take,
       });
-    } else if (user.role === Roles.ADMIN) {
+    } else if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
       productions = await prisma.production.findMany({
         where: { farmId },
         include: { cattle: true },
