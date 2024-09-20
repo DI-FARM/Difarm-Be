@@ -93,7 +93,7 @@ export const getAllTransactions = async (req: Request, res: Response) => {
         skip,
         take,
       });
-    } else if (user.role === Roles.ADMIN,user.role === Roles.MANAGER) {
+    } else if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
       stockTransactions = await prisma.transaction.findMany({
         where: { farmId },
         include: { farm: true ,stock:true},
