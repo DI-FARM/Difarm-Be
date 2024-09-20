@@ -51,7 +51,7 @@ export const allWasteLogs = async (req: Request, res: Response, _next: NextFunct
         skip,
         take,
       });
-    } else if (user.role === Roles.ADMIN) {
+    } else if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
       wasteLogs = await prisma.wastesLog.findMany({
         where: { farmId },
         include: { farm: true },
