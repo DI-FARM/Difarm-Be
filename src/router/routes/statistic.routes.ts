@@ -1,11 +1,15 @@
 import { Router} from 'express';
-import { createStatisticsReport } from '../../controller/statistics.controller';
+import { createStatisticsReport, createStatisticsReportFarm, createStatisticsReportFarmId } from '../../controller/statistics.controller';
+import checkRole from '../../middleware/checkRole.middleware';
+import { Roles } from '../../util/enum/Roles.enum';
 
 
 
 const router = Router();
 
 
-router.get('/', createStatisticsReport);
+router.get('/', checkRole([Roles.SUPERADMIN]), createStatisticsReport);
+router.get('/farm', checkRole([Roles.SUPERADMIN, Roles.ADMIN]), createStatisticsReportFarm);
+router.get('/:farmId', checkRole([Roles.SUPERADMIN]), createStatisticsReportFarmId);
 
 export default router;
