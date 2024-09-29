@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE "inseminations" ALTER COLUMN "date" SET DEFAULT CURRENT_TIMESTAMP;
-
--- AlterTable
-ALTER TABLE "vaccinations" ALTER COLUMN "date" SET DEFAULT CURRENT_TIMESTAMP;
