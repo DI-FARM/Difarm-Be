@@ -13,14 +13,16 @@ import globalTypes from './src/index'; //this line imports extended express requ
 dotenv.config();
 
 const app = express();
-const corsOptions = {
-    origin:process.env.FRONTEND_UrL,
-    credentials:true,
-}
+app.use(cors({
+    origin: '*', // Allow all origins
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: '*', // Allow all headers
+    credentials: true,
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
-app.use(cors(corsOptions));
 app.use(session({
     secret: "secret",
     resave: false,
@@ -31,6 +33,8 @@ app.use(passport.session());
 
 app.use('/api/v1', router);
 app.use(ErrorHandler);
+
+
 
 const port = process.env['PORT'] || 4000;
 app.listen(port, () => {
