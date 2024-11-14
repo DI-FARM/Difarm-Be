@@ -10,6 +10,6 @@ const router = Router();
 
 router.get('/', checkRole([Roles.SUPERADMIN]), createStatisticsReport);
 router.get('/farm', checkRole([Roles.SUPERADMIN, Roles.ADMIN]), createStatisticsReportFarm);
-router.get('/:farmId', checkRole([Roles.SUPERADMIN]), createStatisticsReportFarmId);
+router.get('/:farmId', checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]), createStatisticsReportFarmId);
 
 export default router;
