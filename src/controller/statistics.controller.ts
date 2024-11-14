@@ -13,6 +13,8 @@ export const createStatisticsReport = async (req: Request, res: Response) => {
     const healthyCattleCount = await prisma.cattle.count({ where: { status: 'HEALTHY' } });
     const sickCattleCount = await prisma.cattle.count({ where: { status: 'SICK' } });
     const soldCattleCount = await prisma.cattle.count({ where: { status: 'SOLD' } });
+    const processedCount = await prisma.cattle.count({ where: {  status: 'PROCESSED' } });
+
 
     const calculatePercentage = (part: number, total: number) => {
       return total > 0 ? (part / total) * 100 : 0;
@@ -21,6 +23,8 @@ export const createStatisticsReport = async (req: Request, res: Response) => {
     const healthyCattlePercentage = calculatePercentage(healthyCattleCount, cattleCount);
     const sickCattlePercentage = calculatePercentage(sickCattleCount, cattleCount);
     const soldCattlePercentage = calculatePercentage(soldCattleCount, cattleCount);
+    const processedCattleParcentage = calculatePercentage(processedCount, cattleCount);
+
 
     const totalProduction = await prisma.production.aggregate({
       _sum: {
@@ -104,6 +108,10 @@ export const createStatisticsReport = async (req: Request, res: Response) => {
         sold: {
           count: soldCattleCount,
           percentage: soldCattlePercentage
+        },
+        processed: {
+          count: processedCount,
+          percentage: processedCattleParcentage
         }
       },
       production: {
@@ -152,6 +160,7 @@ export const createStatisticsReportFarm = async (req: Request, res: Response) =>
     const healthyCattleCount = await prisma.cattle.count({ where: { farmId, status: 'HEALTHY' } });
     const sickCattleCount = await prisma.cattle.count({ where: { farmId, status: 'SICK' } });
     const soldCattleCount = await prisma.cattle.count({ where: { farmId, status: 'SOLD' } });
+    const processedCount = await prisma.cattle.count({ where: { farmId, status: 'PROCESSED' } });
 
     const calculatePercentage = (part: number, total: number) => {
       return total > 0 ? (part / total) * 100 : 0;
@@ -160,6 +169,8 @@ export const createStatisticsReportFarm = async (req: Request, res: Response) =>
     const healthyCattlePercentage = calculatePercentage(healthyCattleCount, cattleCount);
     const sickCattlePercentage = calculatePercentage(sickCattleCount, cattleCount);
     const soldCattlePercentage = calculatePercentage(soldCattleCount, cattleCount);
+    const processedCattleParcentage = calculatePercentage(processedCount, cattleCount);
+
 
     const totalProduction = await prisma.production.aggregate({
       where: { farmId },
@@ -254,6 +265,11 @@ export const createStatisticsReportFarm = async (req: Request, res: Response) =>
           count: soldCattleCount,
           percentage: soldCattlePercentage
         }
+        ,
+        processed: {
+          count: processedCount,
+          percentage: processedCattleParcentage
+        }
       },
       production: {
         totalQuantity: totalProductionQuantity,
@@ -291,6 +307,8 @@ export const createStatisticsReportFarmId = async (req: Request, res: Response) 
     const healthyCattleCount = await prisma.cattle.count({ where: { farmId, status: 'HEALTHY' } });
     const sickCattleCount = await prisma.cattle.count({ where: { farmId, status: 'SICK' } });
     const soldCattleCount = await prisma.cattle.count({ where: { farmId, status: 'SOLD' } });
+    const processedCount = await prisma.cattle.count({ where: { farmId, status: 'PROCESSED' } });
+
 
     const calculatePercentage = (part: number, total: number) => {
       return total > 0 ? (part / total) * 100 : 0;
@@ -299,6 +317,9 @@ export const createStatisticsReportFarmId = async (req: Request, res: Response) 
     const healthyCattlePercentage = calculatePercentage(healthyCattleCount, cattleCount);
     const sickCattlePercentage = calculatePercentage(sickCattleCount, cattleCount);
     const soldCattlePercentage = calculatePercentage(soldCattleCount, cattleCount);
+    const processedCattleParcentage = calculatePercentage(processedCount, cattleCount);
+
+
 
     const totalProduction = await prisma.production.aggregate({
       where: { farmId },
@@ -392,6 +413,10 @@ export const createStatisticsReportFarmId = async (req: Request, res: Response) 
         sold: {
           count: soldCattleCount,
           percentage: soldCattlePercentage
+        },
+        processed: {
+          count: processedCount,
+          percentage: processedCattleParcentage
         }
       },
       production: {
