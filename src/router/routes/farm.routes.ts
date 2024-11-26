@@ -23,7 +23,7 @@ router.get(
 );
 router.put(
   "/:farmId",
-  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  checkRole([Roles.ADMIN, Roles.MANAGER, Roles.SUPERADMIN]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   updateFarm
 );

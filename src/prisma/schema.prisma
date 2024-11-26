@@ -243,6 +243,7 @@ model Vaccination {
   farmId       String?       @default(uuid())
   date         DateTime     @default(now())
   vaccineType  String
+  price        Float?       @default(0.0)
   vetId        String?
   veterinarian Veterinarian? @relation(fields: [vetId], references: [id])
   cattle          Cattle   @relation(fields: [cattleId], references: [id])
