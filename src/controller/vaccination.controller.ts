@@ -10,7 +10,6 @@ const responseHandler = new ResponseHandler();
 export const recordVaccination = async (req: Request, res: Response) => {
 
     const {cattleId, date, vaccineType, vetId, farmId, price } = req.body;
-
     try {
         const newVaccination = await prisma.vaccination.create({
           data: {
