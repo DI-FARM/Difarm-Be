@@ -95,7 +95,7 @@ export const getAllVaccinations = async (req: Request, res: Response) => {
   
   export const updateVaccination = async (req: Request, res: Response) => {
     const { vaccineId } = req.params;
-    const { cattleId, date, vaccineType, vetId } = req.body;
+    const { cattleId, date, vaccineType, vetId, price } = req.body;
     try {
       const vaccination = await prisma.vaccination.update({
         where: { id:vaccineId },
@@ -103,6 +103,7 @@ export const getAllVaccinations = async (req: Request, res: Response) => {
           cattleId,
           date: new Date(date),
           vaccineType,
+          price,
           vetId,
         },
       });
