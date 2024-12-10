@@ -1,19 +1,26 @@
-import { Router } from 'express';
+import { Router } from "express";
 import {
-    createCattle,
-    getCattles,
-    getCattleById,
-    updateCattle,
-    deleteCattle,
-} from '../../controller/cattle.controller';
-import checkRole from '../../middleware/checkRole.middleware';
+  createCattle,
+  getCattles,
+  getCattleById,
+  updateCattle,
+  deleteCattle,
+  getGroupedCattles,
+} from "../../controller/cattle.controller";
+import checkRole from "../../middleware/checkRole.middleware";
 import cattleMiddleware from "../../middleware/cattle.middleware";
-import { Roles } from '@prisma/client';
+import { Roles } from "@prisma/client";
 import farmMiddleware from "../../middleware/farm.middleware";
 import asyncWrapper from "../../util/asyncWrapper";
 
 const router = Router();
 
+router.get(
+  "/summary",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  cattleMiddleware.cattlesSummaryValidation,
+  getGroupedCattles
+);
 router.post(
   "/:farmId",
   checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
