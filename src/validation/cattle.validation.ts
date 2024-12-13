@@ -14,8 +14,12 @@ const cattleSchema = Joi.object({
     purchaseDate: Joi.date().iso().required(),
     price: Joi.number().positive().required(),
 });
+const cattleSummarySchema = Joi.object({
+    year: Joi.number().positive().greater(1000).required(),
+});
 
 const validateForm = (schema: Joi.ObjectSchema<any>) => (payload: any) => schema.validate(payload, { abortEarly: false });
 const cattleValidation = validateForm(cattleSchema);
+const cattleSummaryValidation = validateForm(cattleSummarySchema);
 
-export default cattleValidation;
+export default {cattleValidation, cattleSummaryValidation};

@@ -1,9 +1,10 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import ResponseHandler from "../util/responseHandler";
 import prisma from "../db/prisma";
 import { StatusCodes } from "http-status-codes";
 import { paginate } from "../util/paginate";
 import { searchUtil } from "../util/search";
+import cattleService from "../service/cattle.service";
 
 export const createCattle = async (req: Request, res: Response) => {
   const {
@@ -75,8 +76,6 @@ export const createCattle = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const getCattles = async (req: Request, res: Response) => {
   const responseHandler = new ResponseHandler();
   const { page = 1, pageSize = 10, search } = req.query;
@@ -88,14 +87,14 @@ export const getCattles = async (req: Request, res: Response) => {
 
   try {
     const { farmId } = req.params;
-    const searchString: any = typeof search === 'string' ? search : '';
-    const searchCondition :any = searchString
+    const searchString: any = typeof search === "string" ? search : "";
+    const searchCondition: any = searchString
       ? {
           OR: [
-            { tagNumber: { contains: searchString, mode: 'insensitive' } }, // Case-insensitive search
-            { breed: { contains: searchString, mode: 'insensitive' } },
-            { gender: { contains: searchString, mode: 'insensitive' } },
-            { farm: { name: { contains: searchString, mode: 'insensitive' } } }, // Searching the farm name
+            { tagNumber: { contains: searchString, mode: "insensitive" } }, // Case-insensitive search
+            { breed: { contains: searchString, mode: "insensitive" } },
+            { gender: { contains: searchString, mode: "insensitive" } },
+            { farm: { name: { contains: searchString, mode: "insensitive" } } }, // Searching the farm name
           ],
         }
       : {};
@@ -105,7 +104,7 @@ export const getCattles = async (req: Request, res: Response) => {
         ...searchCondition,
       },
       include: { farm: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       skip,
       take,
     });
@@ -115,19 +114,28 @@ export const getCattles = async (req: Request, res: Response) => {
         ...searchCondition,
       },
     });
-    const paginationResult = paginate(cattles, totalCount, currentPage, currentPageSize);
+    const paginationResult = paginate(
+      cattles,
+      totalCount,
+      currentPage,
+      currentPageSize
+    );
 
-    responseHandler.setSuccess(StatusCodes.OK, 'Cattles fetched successfully', paginationResult);
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Cattles fetched successfully",
+      paginationResult
+    );
     return responseHandler.send(res);
   } catch (error) {
     console.error(error);
-    responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, 'Error fetching cattles');
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching cattles"
+    );
     return responseHandler.send(res);
   }
 };
-
-  
-  
 
 export const getCattleById = async (req: Request, res: Response) => {
   const { cattleId } = req.params;
@@ -229,6 +237,40 @@ export const deleteCattle = async (req: Request, res: Response) => {
     responseHandler.setError(
       StatusCodes.INTERNAL_SERVER_ERROR,
       "Error deleting cattle"
+    );
+    return responseHandler.send(res);
+  }
+};
+
+export const getGroupedCattles = async (req: Request, res: Response) => {
+  const responseHandler = new ResponseHandler();
+  const { year } = req.body;
+  try {
+    const data = await cattleService.getGroupedCattlesSum(year);
+    const monthlyCattleCount = data.reduce((acc, record) => {
+      if (record.createdAt && record.createdAt.getFullYear() == year) {
+        const startMonth = record.createdAt.getMonth();
+        for (let i = startMonth; i < 12; i++) {
+          acc[i]++;
+        }
+      }
+      return acc;
+    }, Array(12).fill(0));
+
+    const formattedGrowth = monthlyCattleCount.map((count, index) => ({
+      month: new Date(0, index).toLocaleString("default", { month: "long" }),
+      count,
+    }));
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      `Cattles summary (${year}) retrieved successfully`,
+      formattedGrowth
+    );
+    return responseHandler.send(res);
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error retrieving cattle summary"
     );
     return responseHandler.send(res);
   }
