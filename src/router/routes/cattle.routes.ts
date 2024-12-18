@@ -16,7 +16,7 @@ import asyncWrapper from "../../util/asyncWrapper";
 const router = Router();
 
 router.get(
-  "/summary",
+  "/summary/:year",
   checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   cattleMiddleware.cattlesSummaryValidation,
   getGroupedCattles

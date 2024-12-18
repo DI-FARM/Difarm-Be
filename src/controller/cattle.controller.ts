@@ -244,12 +244,12 @@ export const deleteCattle = async (req: Request, res: Response) => {
 
 export const getGroupedCattles = async (req: Request, res: Response) => {
   const responseHandler = new ResponseHandler();
-  const { year } = req.body;
+  const year = req.params.year || String(new Date().getFullYear());
   try {
-    const data = await cattleService.getGroupedCattlesSum(year);
+    const data = await cattleService.getGroupedCattlesSum(year as string);
     const monthlyCattleCount = data.reduce((acc, record) => {
-      if (record.createdAt && record.createdAt.getFullYear() == year) {
-        const startMonth = record.createdAt.getMonth();
+      if (record.createdAt && String(record.createdAt.getFullYear()) == year) {
+        const startMonth = record.createdAt.getMonth()
         for (let i = startMonth; i < 12; i++) {
           acc[i]++;
         }
@@ -258,7 +258,7 @@ export const getGroupedCattles = async (req: Request, res: Response) => {
     }, Array(12).fill(0));
 
     const formattedGrowth = monthlyCattleCount.map((count, index) => ({
-      month: new Date(0, index).toLocaleString("default", { month: "long" }),
+      month: new Date(0, index).toLocaleString("default", { month: "short" }),
       count,
     }));
     responseHandler.setSuccess(

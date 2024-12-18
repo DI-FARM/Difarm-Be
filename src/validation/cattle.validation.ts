@@ -15,7 +15,7 @@ const cattleSchema = Joi.object({
     price: Joi.number().positive().required(),
 });
 const cattleSummarySchema = Joi.object({
-    year: Joi.number().positive().greater(1000).required(),
+    year: Joi.number().positive().greater(1000),
 });
 
 const validateForm = (schema: Joi.ObjectSchema<any>) => (payload: any) => schema.validate(payload, { abortEarly: false });
