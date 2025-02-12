@@ -245,8 +245,9 @@ export const deleteCattle = async (req: Request, res: Response) => {
 export const getGroupedCattles = async (req: Request, res: Response) => {
   const responseHandler = new ResponseHandler();
   const year = req.params.year || String(new Date().getFullYear());
+  const farmId = req.params.farmId
   try {
-    const data = await cattleService.getGroupedCattlesSum(year as string);
+    const data = await cattleService.getGroupedCattlesSum(year as string, farmId);
     const monthlyCattleCount = data.reduce((acc, record) => {
       if (record.createdAt && String(record.createdAt.getFullYear()) == year) {
         const startMonth = record.createdAt.getMonth()

@@ -15,9 +15,10 @@ const getSingleCattle = async (cattleId: string) => {
   });
   return result
 };
-const getGroupedCattlesSum = async (year: string) => {
+const getGroupedCattlesSum = async (year: string, farmId: string) => {
   const result = await prisma.cattle.findMany({
     where: {
+      farmId,
       createdAt: {
         gte: new Date(`${year}-01-01T00:00:00.000Z`), 
         lte: new Date(`${year}-12-31T23:59:59.999Z`),
