@@ -20,7 +20,8 @@ const checkAccountExists = async (
     responseHandler.setError(StatusCodes.NOT_FOUND, "Account not found");
     return responseHandler.send(res);
   }
-  if (data.users[0].id != user.userId) {
+  // if (data.users[0].id != user.userId) {
+  if (data.users?.id != user.userId) {
     responseHandler.setError(
       StatusCodes.FORBIDDEN,
       "You dont have access to this user"

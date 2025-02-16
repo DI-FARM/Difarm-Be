@@ -9,16 +9,21 @@ interface EmailVerifyI {
     userId: String
 }
 
+const expiryTime = Number(process.env.EXPIRE_TIME);
+if (isNaN(expiryTime)) {
+    throw new Error('EXPIRE_TIME must be a valid number in seconds');
+}
+
 const generateToken = (data: any) => {
-    const token = Jwt.sign({ data }, process.env.JWT_SECRET as string, {
-        expiresIn: process.env.EXPIRE_TIME,
+    const token = Jwt.sign({ data }, process.env.JWT_VERIF_SECRET as string, {
+        expiresIn: expiryTime,
     });
     return token;
 };
 
 const generateEmailVerificationToken = (data: EmailVerifyI) => {
     const token = Jwt.sign({ data }, process.env.JWT_VERIF_SECRET as string, {
-        expiresIn: process.env.EXPIRE_VERIF_TIME,
+        expiresIn: expiryTime,
     });
     return token;
 };
