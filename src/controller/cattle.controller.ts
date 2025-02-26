@@ -9,14 +9,14 @@ import cattleService from "../service/cattle.service";
 export const createCattle = async (req: Request, res: Response) => {
   const {
     tagNumber,
-    breed,
-    gender,
-    DOB,
     weight,
-    location,
-    lastCheckupDate,
-    vaccineHistory,
-    purchaseDate,
+    // breed,
+    // gender,
+    // DOB,
+    // location,
+    // lastCheckupDate,
+    // vaccineHistory,
+    // purchaseDate,
     price,
   } = req.body;
   const { farmId } = req.params;
@@ -46,17 +46,18 @@ export const createCattle = async (req: Request, res: Response) => {
 
     const newCattle = await prisma.cattle.create({
       data: {
-        tagNumber,
-        breed,
-        gender,
-        DOB,
+        ...req.body,
         weight: weightFloat,
-        location,
-        farmId,
-        lastCheckupDate,
-        vaccineHistory,
-        purchaseDate,
         price: priceFloat,
+        farmId,
+        // tagNumber,
+        // breed,
+        // gender,
+        // DOB,
+        // location,
+        // lastCheckupDate,
+        // vaccineHistory,
+        // purchaseDate,
       },
     });
     responseHandler.setSuccess(
@@ -103,7 +104,7 @@ export const getCattles = async (req: Request, res: Response) => {
         farmId,
         ...searchCondition,
       },
-      include: { farm: true },
+      include: { farm: true, mother:{select:{tagNumber:true}} },
       orderBy: { createdAt: "desc" },
       skip,
       take,
@@ -168,39 +169,29 @@ export const getCattleById = async (req: Request, res: Response) => {
 };
 
 export const updateCattle = async (req: Request, res: Response) => {
+  console.log('controller')
   const { cattleId } = req.params;
-  const {
-    tagNumber,
-    breed,
-    gender,
-    DOB,
-    weight,
-    status,
-    location,
-    farmId,
-    lastCheckupDate,
-    vaccineHistory,
-    purchaseDate,
-    price,
-  } = req.body;
+  // const {
+  //   tagNumber,
+  //   breed,
+  //   gender,
+  //   DOB,
+  //   weight,
+  //   status,
+  //   location,
+  //   farmId,
+  //   lastCheckupDate,
+  //   vaccineHistory,
+  //   purchaseDate,
+  //   price,
+  // } = req.body;
   const responseHandler = new ResponseHandler();
-
+const{farmId, ...data} = req.body
   try {
     const updatedCattle = await prisma.cattle.update({
       where: { id: cattleId },
       data: {
-        tagNumber,
-        breed,
-        gender,
-        DOB,
-        weight,
-        status,
-        location,
-        farmId,
-        lastCheckupDate,
-        vaccineHistory,
-        purchaseDate,
-        price,
+        ...data,
       },
     });
 
@@ -211,6 +202,7 @@ export const updateCattle = async (req: Request, res: Response) => {
     );
     return responseHandler.send(res);
   } catch (error) {
+    console.log(error)
     responseHandler.setError(
       StatusCodes.INTERNAL_SERVER_ERROR,
       "Error updating cattle"
