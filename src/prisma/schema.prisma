@@ -72,19 +72,30 @@ model Cattle {
   weight          Float
   status          CattleStatus   @default(HEALTHY)
   location        String?
+  birthOrigin     BirthOrign?
+  motherId        String?
   farmId          String
   lastCheckupDate DateTime?
   vaccineHistory  String?
   purchaseDate    DateTime?
+  previousOwner   String?
   price           Float?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   farm            Farm           @relation("FarmToCattle", fields: [farmId], references: [id])
+  mother          Cattle?  @relation("MotherChild", fields: [motherId], references: [id])
+
   productions     Production[]
   inseminations   Insemination[]
   vaccinations    Vaccination[]
+  children        Cattle[] @relation("MotherChild")
 
   @@index([farmId])
+}
+
+enum BirthOrign {
+  OnFarm
+  Purchased
 }
 
 model Production {

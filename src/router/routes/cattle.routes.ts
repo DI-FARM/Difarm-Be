@@ -43,6 +43,7 @@ router.get(
 router.put(
   "/:cattleId",
   checkRole([Roles.ADMIN, Roles.MANAGER]),
+  cattleMiddleware.updateCattlesValidation,
   asyncWrapper(cattleMiddleware.checkUserCattleExists),
   updateCattle
 );
