@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Stock" ALTER COLUMN "type" DROP DEFAULT;

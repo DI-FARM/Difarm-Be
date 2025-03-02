@@ -9,7 +9,31 @@ import AuthorizedOnProperty from "./checkOwner.middleware";
 const responseHandler = new ResponseHandler();
 
 const cattlesValidation = (req: Request, res:Response, next: NextFunction) => {
-    const { error } = cattleValidation(req.body);
+    const { error } = cattleValidation.cattleValidation(req.body);
+    if (error) {
+        res.status(400).json({
+            status: 400,
+            error: error.details.map((detail) => detail.message.replace(/[^a-zA-Z0-9 ]/g, '')),
+        });
+    } else {
+        next();
+    }
+};
+const updateCattlesValidation = (req: Request, res:Response, next: NextFunction) => {
+  console.log('first')
+    const { error } = cattleValidation.updateCattleValidation(req.body);
+    console.log('sec')
+    if (error) {
+        res.status(400).json({
+            status: 400,
+            error: error.details.map((detail) => detail.message.replace(/[^a-zA-Z0-9 ]/g, '')),
+        });
+    } else {
+        next();
+    }
+};
+const cattlesSummaryValidation = (req: Request, res:Response, next: NextFunction) => {
+    const { error } = cattleValidation.cattleSummaryValidation(req.body);
     if (error) {
         res.status(400).json({
             status: 400,
@@ -42,4 +66,4 @@ const checkUserCattleExists = async(req:Request, res:Response,next:NextFunction)
   
   }
 
-export default {cattlesValidation, checkUserCattleExists};
+export default {cattlesValidation, updateCattlesValidation, checkUserCattleExists, cattlesSummaryValidation};

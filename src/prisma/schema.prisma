@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -21,11 +15,219 @@ model Account {
   role      Roles    @default(ADMIN)
   password  String?
   status    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  users     User?
+}
 
-  users     User[]
+model User {
+  id         String   @id @default(uuid())
+  accountId  String   @unique
+  fullname   String
+  gender     Gender?
+  profilePic String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  farms      Farm[]   @relation("UserFarms")
+  account    Account  @relation(fields: [accountId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt @default(now())
+  @@index([accountId])
+}
+
+model Farm {
+  id                     String                  @id @default(uuid())
+  name                   String                  @unique
+  location               String
+  size                   Float
+  type                   String
+  ownerId                String
+  status                 Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @default(now()) @updatedAt
+  managerId              String?
+  cattle                 Cattle[]                @relation("FarmToCattle")
+  owner                  User                    @relation("UserFarms", fields: [ownerId], references: [id])
+  productions            Production[]
+  productionTotals       ProductionTotals[]
+  productionTransactions ProductionTransaction[]
+  stocks                 Stock[]
+  transactions           Transaction[]
+  wasteLogs              WastesLog[]
+  inseminations          Insemination[]
+  vaccinations           Vaccination[]
+  veterinarians          Veterinarian[]
+
+  @@index([ownerId])
+}
+
+model Cattle {
+  id              String         @id @default(uuid())
+  tagNumber       String         @unique
+  breed           String
+  gender          String
+  DOB             DateTime?
+  weight          Float
+  status          CattleStatus   @default(HEALTHY)
+  location        String?
+  birthOrigin     BirthOrign?
+  motherId        String?
+  farmId          String
+  lastCheckupDate DateTime?
+  vaccineHistory  String?
+  purchaseDate    DateTime?
+  previousOwner   String?
+  price           Float?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  farm            Farm           @relation("FarmToCattle", fields: [farmId], references: [id])
+  mother          Cattle?  @relation("MotherChild", fields: [motherId], references: [id])
+
+  productions     Production[]
+  inseminations   Insemination[]
+  vaccinations    Vaccination[]
+  children        Cattle[] @relation("MotherChild")
+
+  @@index([farmId])
+}
+
+enum BirthOrign {
+  OnFarm
+  Purchased
+}
+
+model Production {
+  id             String    @id @default(uuid())
+  farmId         String
+  cattleId       String
+  productName    String
+  quantity       Int
+  productionDate DateTime
+  expirationDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  cattle         Cattle    @relation(fields: [cattleId], references: [id])
+  farm           Farm      @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+  @@index([cattleId])
+}
+
+model ProductionTransaction {
+  id          String      @id @default(uuid())
+  farmId      String
+  productType ProductType
+  total       Float
+  quantity    Float
+  value       Float
+  date        DateTime    @default(now())
+  consumer    String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  farm        Farm        @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+}
+
+model ProductionTotals {
+  id            String      @id @default(uuid())
+  farmId        String
+  productType   ProductType
+  totalQuantity Float       @default(0.0)
+  pricePerUnit  Float       @default(0.0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  farm          Farm        @relation(fields: [farmId], references: [id])
+
+  @@unique([farmId, productType])
+}
+
+model WastesLog {
+  id        String    @id @default(uuid())
+  farmId    String
+  type      WasteType
+  quantity  Int
+  date      DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  farm      Farm      @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+}
+
+model Stock {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  quantity     Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  farmId       String
+  type         StockType
+  farm         Farm          @relation(fields: [farmId], references: [id])
+  transactions Transaction[]
+}
+
+model Transaction {
+  id       String          @id @default(uuid())
+  stockId  String
+  quantity Int
+  type     TransactionType
+  date     DateTime        @default(now())
+  farmId   String
+  farm     Farm            @relation(fields: [farmId], references: [id])
+  stock    Stock           @relation(fields: [stockId], references: [id])
+
+  @@index([stockId])
+  @@index([farmId])
+}
+
+model Vaccination {
+  id           String        @id @default(uuid())
+  cattleId     String
+  date         DateTime      @default(now())
+  vaccineType  String
+  price       Float?        @default(0.0)      
+  vetId        String?
+  farmId       String?       @default(uuid())
+  cattle       Cattle        @relation(fields: [cattleId], references: [id])
+  farm         Farm?         @relation(fields: [farmId], references: [id])
+  veterinarian Veterinarian? @relation(fields: [vetId], references: [id])
+
+  @@index([cattleId])
+  @@index([vetId])
+  @@index([farmId])
+  @@map("vaccinations")
+}
+
+model Veterinarian {
+  id            String         @id @default(uuid())
+  name          String
+  phone         String
+  email         String         @unique
+  farmId        String?        @default(uuid())
+  inseminations Insemination[]
+  vaccinations  Vaccination[]
+  farm          Farm?          @relation(fields: [farmId], references: [id])
+
+  @@index([farmId])
+  @@map("veterinarians")
+}
+
+model Insemination {
+  id           String        @id @default(uuid())
+  cattleId     String
+  date         DateTime      @default(now())
+  method       String
+  vetId        String?
+  type         String
+  farmId       String?       @default(uuid())
+  cattle       Cattle        @relation(fields: [cattleId], references: [id])
+  farm         Farm?         @relation(fields: [farmId], references: [id])
+  veterinarian Veterinarian? @relation(fields: [vetId], references: [id])
+
+  @@index([cattleId])
+  @@index([vetId])
+  @@index([farmId])
+  @@map("inseminations")
 }
 
 enum Roles {
@@ -34,84 +236,9 @@ enum Roles {
   MANAGER
 }
 
-model User {
-  id          String   @id @default(uuid())
-  accountId   String   @unique
-  fullname    String
-  gender      Gender?
-  profilePic  String?
-  
-  farms       Farm[]   @relation("UserFarms")
-
-  account        Account     @relation(fields: [accountId], references: [id])
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt @default(now())
-
-  @@index([accountId])
-}
-
 enum Gender {
   MALE
   FEMALE
-}
-
-model Farm {
-  id          String   @id @default(uuid()) 
-  name        String   @unique 
-  location    String   
-  size        Float    // Size of the farm in acres or hectares
-  type        String   // Type of farm (e.g., crop, livestock, mixed)
-  ownerId     String   
-  managerId   String?
-  status      Boolean  @default(true)   
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt @default(now())
-
-  owner       User     @relation("UserFarms", fields: [ownerId], references: [id])
-  cattle      Cattle[] @relation("FarmToCattle")
-
-  productions Production[]
-  wasteLogs   WastesLog[]
-  productionTotals  ProductionTotals[]
-  productionTransactions ProductionTransaction[]
-
-  stocks      Stock[]
-  transactions Transaction[]
-  vaccinations  Vaccination[]
-  inseminations  Insemination[]
-  veterinarians  Veterinarian[]
-
-  @@index([ownerId])
-}
-
-
-
-model Cattle {
-  id               String       @id @default(uuid())
-  tagNumber        String       @unique
-  breed            String
-  gender           String
-  DOB              DateTime?
-  weight           Float
-  status           CattleStatus  @default(HEALTHY)
-  location         String?
-  farmId           String
-  lastCheckupDate  DateTime?
-  vaccineHistory   String?
-  purchaseDate     DateTime?
-  price            Float?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-
-  farm             Farm         @relation("FarmToCattle", fields: [farmId], references: [id])
-
-  productions      Production[]
-  vaccinations  Vaccination[]
-  inseminations  Insemination[]
-
-  @@index([farmId])
 }
 
 enum CattleStatus {
@@ -121,55 +248,6 @@ enum CattleStatus {
   PROCESSED
 }
 
-model Production {
-  id              String   @id @default(uuid())
-  farmId          String
-  cattleId        String
-  productName     String
-  quantity        Int
-  productionDate  DateTime
-  expirationDate  DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  farm            Farm     @relation(fields: [farmId], references: [id])
-  cattle          Cattle   @relation(fields: [cattleId], references: [id])
-
-  @@index([farmId])
-  @@index([cattleId])
-}
-
-model ProductionTransaction {
-  id              String   @id @default(uuid())
-  farmId          String
-  productType     ProductType
-  total           Float
-  quantity        Float
-  value           Float
-  date            DateTime  @default(now())
-  consumer        String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  farm            Farm     @relation(fields: [farmId], references: [id])
-
-  @@index([farmId])
-}
-
-model ProductionTotals {
-  id           String      @id @default(uuid())
-  farmId       String
-  productType  ProductType
-  totalQuantity  Float    @default(0.0)
-  pricePerUnit  Float    @default(0.0)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  farm         Farm        @relation(fields: [farmId], references: [id])
-
-  @@unique([farmId, productType])
-}
-
 enum ProductType {
   MILK
   MEAT
@@ -177,36 +255,9 @@ enum ProductType {
   LIQUIDMANURE
 }
 
-model WastesLog {
-  id              String   @id @default(uuid())
-  farmId          String
-  type            WasteType
-  quantity        Int
-  date            DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  farm            Farm     @relation(fields: [farmId], references: [id])
-
-  @@index([farmId])
-}
-
 enum WasteType {
   DUNG
   LIQUIDMANURE
-}
-
-model Stock {
-  id          String     @id @default(uuid())
-  name        String     @unique
-  quantity    Int
-  type        StockType
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  farmId      String
-  farm        Farm       @relation(fields: [farmId], references: [id])
-
-  transactions Transaction[]
 }
 
 enum StockType {
@@ -218,76 +269,7 @@ enum StockType {
   HYGIENE_MATERIALS
 }
 
-model Transaction {
-  id          String   @id @default(uuid())
-  stockId     String
-  stock       Stock    @relation(fields: [stockId], references: [id])
-  quantity    Int
-  type        TransactionType
-  date        DateTime @default(now())
-  farmId      String
-  farm        Farm     @relation(fields: [farmId], references: [id])
-
-  @@index([stockId])
-  @@index([farmId])
-}
-
 enum TransactionType {
   ADDITION
   CONSUME
-}
-
-model Vaccination {
-  id           String       @id @default(uuid())
-  cattleId     String
-  farmId       String?       @default(uuid())
-  date         DateTime     @default(now())
-  vaccineType  String
-  vetId        String?
-  veterinarian Veterinarian? @relation(fields: [vetId], references: [id])
-  cattle          Cattle   @relation(fields: [cattleId], references: [id])
-  farm        Farm?     @relation(fields: [farmId], references: [id])
-
-
-
-  @@map("vaccinations")
-  @@index([cattleId])
-  @@index([vetId])
-  @@index([farmId])
-}
-
-model Veterinarian {
-  id            String         @id @default(uuid())
-  name          String
-  farmId       String?          @default(uuid())
-  phone         String
-  email         String         @unique
-  vaccinations  Vaccination[]
-  inseminations Insemination[]
-  farm        Farm?     @relation(fields: [farmId], references: [id])
-
-
-  @@map("veterinarians")
-  @@index([farmId])
-
-}
-
-model Insemination {
-  id           String       @id @default(uuid())
-  cattleId     String
-  farmId       String?       @default(uuid())
-  date         DateTime     @default(now())
-  method       String
-  type         String
-  vetId        String?
-  veterinarian Veterinarian? @relation(fields: [vetId], references: [id])
-  cattle          Cattle   @relation(fields: [cattleId], references: [id])
-  farm        Farm?     @relation(fields: [farmId], references: [id])
-
-
-  @@map("inseminations")
-  @@index([cattleId])
-  @@index([vetId])
-  @@index([farmId])
-
 }
