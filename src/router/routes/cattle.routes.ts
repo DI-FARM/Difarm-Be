@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createCattle,
   getCattles,
+  getAllCattles,
   getCattleById,
   updateCattle,
   deleteCattle,
@@ -33,6 +34,12 @@ router.get(
   checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   getCattles
+);
+router.get(
+  "/:farmId/all",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getAllCattles
 );
 router.get(
   "/cattle/:cattleId",

@@ -137,6 +137,34 @@ export const getCattles = async (req: Request, res: Response) => {
     return responseHandler.send(res);
   }
 };
+export const getAllCattles = async (req: Request, res: Response) => {
+  const responseHandler = new ResponseHandler();
+  try {
+    const { farmId } = req.params;
+
+    const cattles = await prisma.cattle.findMany({
+      where: {
+        farmId,
+      },
+      include: { farm: true, mother:{select:{tagNumber:true}} },
+      orderBy: { createdAt: "desc" },
+
+    });
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Cattles fetched successfully",
+      cattles
+    );
+    return responseHandler.send(res);
+  } catch (error) {
+    console.error(error);
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching all cattles"
+    );
+    return responseHandler.send(res);
+  }
+};
 
 export const getCattleById = async (req: Request, res: Response) => {
   const { cattleId } = req.params;
