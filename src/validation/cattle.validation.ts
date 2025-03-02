@@ -4,7 +4,7 @@ const cattleSchema = Joi.object({
     tagNumber: Joi.string().min(3).trim().required(),
     breed: Joi.string().min(3).trim().required(),
     gender: Joi.string().valid('Bull', 'Cow', 'Other').required(),
-    DOB: Joi.date().iso().required(),
+    // DOB: Joi.date().iso().required(),
     weight: Joi.number().positive().required(),
     location: Joi.string().min(3).trim().required(),
     farmId: Joi.string().uuid().required(),
@@ -17,24 +17,30 @@ const cattleSchema = Joi.object({
     purchaseDate: Joi.date().iso().when('birthOrigin', {
         is: 'Purchased',
         then: Joi.required(),
-        otherwise: Joi.forbidden()
+        otherwise: Joi.allow(null)
     }),
     previousOwner: Joi.string().when('birthOrigin', {
         is: 'Purchased',
         then: Joi.required(),
-        otherwise: Joi.forbidden()
+        otherwise: Joi.allow(null)
     }),
     price: Joi.number().positive().when('birthOrigin', {
         is: 'Purchased',
         then: Joi.required(),
-        otherwise: Joi.forbidden()
+        otherwise: Joi.allow(null)
     }),
     
     // This field is required only if birthOrigin is 'Farm'
     motherId: Joi.string().when('birthOrigin', {
         is: 'OnFarm',
         then: Joi.required(),
-        otherwise: Joi.forbidden()
+        otherwise: Joi.allow(null)
+    }),
+    // This field is required only if birthOrigin is 'Farm'
+    DOB: Joi.date().iso().when('birthOrigin', {
+        is: 'OnFarm',
+        then: Joi.required(),
+        otherwise: Joi.allow(null)
     })
 });
 const updateCattleSchema = Joi.object({
