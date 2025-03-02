@@ -32,8 +32,6 @@ export const createFarm = async (req: Request, res: Response) => {
     });
     responseHandler.setSuccess(201, "Farm created successfully", newFarm);
   } catch (error) {
-    console.log(error);
-
     responseHandler.setError(500, "Error creating farm");
   }
 
@@ -58,6 +56,7 @@ export const getFarms = async (req: Request, res: Response) => {
 
     responseHandler.setSuccess(200, "Farms retrieved successfully", farms);
   } catch (error) {
+    console.log(error)
     responseHandler.setError(500, "Error fetching farms");
   }
 
