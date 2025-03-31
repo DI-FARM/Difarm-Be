@@ -46,25 +46,48 @@ export const createStatisticsReport = async (req: Request, res: Response) => {
       percentage: calculatePercentage(item._sum.quantity || 0, totalProductionQuantity)
     }));
 
-    const totalStockQuantity = await prisma.stock.aggregate({
-      _sum: {
-        quantity: true
-      }
-    });
+    // Fetch the stock data, group by the item category
+const farmId = req.params.farmId; // Define farmId
 
-    const stockByType = await prisma.stock.groupBy({
-      by: ['type'],
-      _sum: {
-        quantity: true
-      }
-    });
+const stockByCategory = await prisma.stock.groupBy({
+  by: ['itemId'], // Group by itemId to access the item's category
+  where: { farmId },
+  _sum: {
+    balanceInStock: true, // Sum the balanceInStock
+  },
+});
 
-    const totalStock = totalStockQuantity._sum.quantity || 0;
-    const stockPercentageByType = stockByType.map(item => ({
-      type: item.type,
-      quantity: item._sum.quantity || 0,
-      percentage: calculatePercentage(item._sum.quantity || 0, totalStock)
-    }));
+const itemDetails = await prisma.item.findMany({
+  where: {
+    id: {
+      in: stockByCategory.map(item => item.itemId),
+    },
+  },
+});
+
+// Calculate the total stock balance
+const totalStock = stockByCategory.reduce(
+  (sum, item) => sum + (item._sum.balanceInStock || 0),
+  0
+);
+
+// Map the grouped data to categorize by item category and calculate percentage
+const stockPercentageByCategory = stockByCategory.map(item => {
+  const itemDetail = itemDetails.find(detail => detail.id === item.itemId);
+  const category = itemDetail?.categoryId; // Access the category of the item
+
+  // If there's no category, skip
+  if (!category) return null;
+
+  return {
+    category: category, // Category name
+    quantity: item._sum.balanceInStock || 0, // Quantity in stock for this category
+    percentage: calculatePercentage(item._sum.balanceInStock || 0, totalStock), // Calculate percentage
+  };
+}).filter(Boolean); // Remove any null values if category is missing
+
+console.log(stockPercentageByCategory);
+
 
     const totalInseminations = await prisma.insemination.count();
     const inseminationByType = await prisma.insemination.groupBy({
@@ -120,7 +143,7 @@ export const createStatisticsReport = async (req: Request, res: Response) => {
       },
       stock: {
         totalQuantity: totalStock,
-        byType: stockPercentageByType
+        byType: stockPercentageByCategory
       },
       insemination: {
         total: totalInseminations,
@@ -197,24 +220,66 @@ export const createStatisticsReportFarm = async (req: Request, res: Response) =>
     const totalStockQuantity = await prisma.stock.aggregate({
       where: { farmId },
       _sum: {
-        quantity: true
+        balanceInStock: true
       }
     });
 
-    const stockByType = await prisma.stock.groupBy({
-      by: ['type'],
+    const stockByCategory = await prisma.stock.groupBy({
+      by: ['itemId'], // Group by itemId (since Stock has a relation to Item)
       where: { farmId },
       _sum: {
-        quantity: true
-      }
+        balanceInStock: true, // Sum balanceInStock for each item
+      },
+    });
+    
+    const itemDetails = await prisma.item.findMany({
+      where: {
+        id: {
+          in: stockByCategory.map(item => item.itemId),
+        },
+      },
     });
 
-    const totalStock = totalStockQuantity._sum.quantity || 0;
-    const stockPercentageByType = stockByType.map(item => ({
-      type: item.type,
-      quantity: item._sum.quantity || 0,
-      percentage: calculatePercentage(item._sum.quantity || 0, totalStock)
-    }));
+    const stockByCategoryGrouped = stockByCategory.reduce((acc: { [key: string]: any }, item) => {
+      const itemDetail = itemDetails.find(detail => detail.id === item.itemId);
+      const category = itemDetail?.categoryId; // Get the category from the item
+    
+      if (!category) return acc; // Skip if no category
+    
+      if (!acc[category]) {
+        acc[category] = {
+          category,
+          totalBalanceInStock: 0,
+          items: [],
+        };
+      }
+    
+      // Add the balanceInStock to the category total
+      acc[category].totalBalanceInStock += item._sum.balanceInStock || 0;
+    
+      // Add the item to the category's items array
+      acc[category].items.push({
+        itemId: item.itemId,
+        balanceInStock: item._sum.balanceInStock || 0,
+        itemName: itemDetail?.name,
+      });
+    
+      return acc;
+    }, {});
+    
+    const totalStock = Object.values(stockByCategoryGrouped).reduce(
+      (sum, category) => sum + category.totalBalanceInStock,
+      0
+    );
+    
+    const stockPercentageByCategory = Object.values(stockByCategoryGrouped).map(
+      (category) => ({
+        category: category.category,
+        totalBalanceInStock: category.totalBalanceInStock,
+        percentage: calculatePercentage(category.totalBalanceInStock, totalStock),
+        items: category.items,
+      })
+    );
 
     const totalInseminations = await prisma.insemination.count({
       where: { farm: { id: farmId } }
@@ -277,7 +342,7 @@ export const createStatisticsReportFarm = async (req: Request, res: Response) =>
       },
       stock: {
         totalQuantity: totalStock,
-        byType: stockPercentageByType
+        byType: stockPercentageByCategory
       },
       insemination: {
         total: totalInseminations,
@@ -346,24 +411,38 @@ export const createStatisticsReportFarmId = async (req: Request, res: Response) 
     const totalStockQuantity = await prisma.stock.aggregate({
       where: { farmId },
       _sum: {
-        quantity: true
+        balanceInStock: true
       }
     });
 
     const stockByType = await prisma.stock.groupBy({
-      by: ['type'],
+      by: ['itemId'],
       where: { farmId },
       _sum: {
-        quantity: true
-      }
+        balanceInStock: true,
+      },
     });
 
-    const totalStock = totalStockQuantity._sum.quantity || 0;
-    const stockPercentageByType = stockByType.map(item => ({
-      type: item.type,
-      quantity: item._sum.quantity || 0,
-      percentage: calculatePercentage(item._sum.quantity || 0, totalStock)
-    }));
+    const itemDetails = await prisma.item.findMany({
+      where: {
+        id: {
+          in: stockByType.map(item => item.itemId),
+        },
+      },
+    });
+
+    const totalStock = stockByType.reduce((sum, item) => sum + (item._sum.balanceInStock || 0), 0);
+
+    const stockPercentageByType = stockByType.map((item) => {
+      const itemDetail = itemDetails.find(detail => detail.id === item.itemId);
+      return {
+        itemId: item.itemId,
+        itemName: itemDetail?.name, // Accessing item details
+        balanceInStock: item._sum.balanceInStock || 0,
+        percentage: calculatePercentage(item._sum.balanceInStock || 0, totalStock),
+      };
+    });
+    
 
     const totalInseminations = await prisma.insemination.count({
       where: { farm: { id: farmId } }

@@ -51,7 +51,10 @@ model Farm {
   productionTotals       ProductionTotals[]
   productionTransactions ProductionTransaction[]
   stocks                 Stock[]
-  transactions           Transaction[]
+  items                  Item[]
+  suppliers              Supplier[]
+  stockIns               StockIn[]
+  stockOuts              StockOut[]
   wasteLogs              WastesLog[]
   inseminations          Insemination[]
   vaccinations           Vaccination[]
@@ -143,31 +146,98 @@ model WastesLog {
   @@index([farmId])
 }
 
-model Stock {
-  id           String        @id @default(uuid())
-  name         String        @unique
-  quantity     Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  farmId       String
-  type         StockType
-  farm         Farm          @relation(fields: [farmId], references: [id])
-  transactions Transaction[]
+model Item {
+  id         String    @id @default(uuid()) @unique
+  name       String    @unique
+  unitPrice  Float
+  category   Category  @relation(fields: [categoryId], references: [id])
+  categoryId String
+  supplier   Supplier  @relation(fields: [supplierId], references: [id])
+  supplierId String
+  stock      Stock?
+  stockIn    StockIn[]
+  stockOut   StockOut[]
+  farm       Farm      @relation(fields: [farmId], references: [id])
+  farmId     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
-model Transaction {
-  id       String          @id @default(uuid())
-  stockId  String
-  quantity Int
-  type     TransactionType
-  date     DateTime        @default(now())
-  farmId   String
-  farm     Farm            @relation(fields: [farmId], references: [id])
-  stock    Stock           @relation(fields: [stockId], references: [id])
+model Category {
+  id       String    @id @default(uuid()) @unique
+  name     String
+  unit     String
+  items    Item[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
 
-  @@index([stockId])
+model Supplier {
+  id      String @id @default(uuid()) @unique
+  name    String
+  email   String? @unique
+  phone   String? @unique
+  TIN     String? @unique
+  farm    Farm   @relation(fields: [farmId], references: [id])
+  farmId  String
+  items   Item[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Stock {
+  id                 String   @id @default(uuid()) @unique
+  item               Item     @relation(fields: [itemId], references: [id])
+  itemId             String   @unique
+  quantityInStock    Int
+  quantityOutStock   Int
+  balanceInStock     Int
+  totalValueReceived Float
+  totalBalance       Float
+  farm               Farm     @relation(fields: [farmId], references: [id])
+  farmId             String
+
+  createdAt DateTime  @default(now())
+
   @@index([farmId])
 }
+
+model StockIn {
+  id            String    @id @default(uuid()) @unique
+  receiveDate   DateTime
+  quarter       String?
+  item          Item      @relation(fields: [itemId], references: [id])
+  itemId        String
+  quantity      Int
+  totalPrice    Float
+  specification String
+  farm          Farm      @relation(fields: [farmId], references: [id])
+  farmId        String
+
+  createdAt DateTime  @default(now())
+
+  @@index([farmId])
+}
+
+model StockOut {
+  id            String    @id @default(uuid()) @unique
+  requestDate   DateTime
+  quarter       String?
+  item          Item      @relation(fields: [itemId], references: [id])
+  itemId        String
+  requestPerson String
+  requestReason String
+  quantity      Int
+  totalPrice    Float
+  specification String
+  farm          Farm      @relation(fields: [farmId], references: [id])
+  farmId        String
+
+  createdAt DateTime  @default(now())
+
+  @@index([farmId])
+}
+
 
 model Vaccination {
   id           String        @id @default(uuid())
