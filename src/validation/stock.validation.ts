@@ -1,11 +1,18 @@
-import Joi from 'joi';
+import Joi from "joi";
 
-const stockSchema = Joi.object({
-    name: Joi.string().min(3).trim().required(),
-    quantity: Joi.number().greater(0).required(),
-    type: Joi.string().valid('FOOD','MEDICATION','CONSTRUCTION','WATER','FEED_ACCESSORIES','HYGIENE_MATERIALS'),
+export const stockInSchema = Joi.object({
+  itemId: Joi.string().required().messages({ "any.required": "Item ID is required" }),
+  quantity: Joi.number().positive().required().messages({ "any.required": "Quantity is required", "number.positive": "Quantity must be a positive number" }),
+  supplierId: Joi.string().optional(),
+  quarter: Joi.string().optional(),
+  totalPrice: Joi.number().positive().optional(),
+  specification: Joi.string().optional(),
+  receiveDate: Joi.date().default(() => new Date())
 });
 
-const validateStock = (payload: any) => stockSchema.validate(payload, { abortEarly: false });
-
-export default validateStock;
+export const stockOutSchema = Joi.object({
+  itemId: Joi.string().required().messages({ "any.required": "Item ID is required" }),
+  quantity: Joi.number().positive().required().messages({ "any.required": "Quantity is required", "number.positive": "Quantity must be a positive number" }),
+  farmId: Joi.string().required().messages({ "any.required": "Farm ID is required" }),
+  receiveDate: Joi.date().default(() => new Date())
+});

@@ -15,7 +15,7 @@ if (isNaN(expiryTime)) {
 }
 
 const generateToken = (data: any) => {
-    const token = Jwt.sign({ data }, process.env.JWT_VERIF_SECRET as string, {
+    const token = Jwt.sign({ data }, process.env.JWT_SECRET as string, {
         expiresIn: expiryTime,
     });
     return token;
