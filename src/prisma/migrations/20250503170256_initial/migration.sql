@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "BirthOrign" AS ENUM ('OnFarm', 'Purchased');
+
+-- CreateEnum
 CREATE TYPE "Roles" AS ENUM ('SUPERADMIN', 'ADMIN', 'MANAGER');
 
 -- CreateEnum
@@ -73,10 +76,13 @@ CREATE TABLE "Cattle" (
     "weight" DOUBLE PRECISION NOT NULL,
     "status" "CattleStatus" NOT NULL DEFAULT 'HEALTHY',
     "location" TEXT,
+    "birthOrigin" "BirthOrign",
+    "motherId" TEXT,
     "farmId" TEXT NOT NULL,
     "lastCheckupDate" TIMESTAMP(3),
     "vaccineHistory" TEXT,
     "purchaseDate" TIMESTAMP(3),
+    "previousOwner" TEXT,
     "price" DOUBLE PRECISION,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -142,28 +148,89 @@ CREATE TABLE "WastesLog" (
 );
 
 -- CreateTable
-CREATE TABLE "Stock" (
+CREATE TABLE "Item" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "quantity" INTEGER NOT NULL,
+    "unitPrice" DOUBLE PRECISION NOT NULL,
+    "categoryId" TEXT NOT NULL,
+    "supplierId" TEXT NOT NULL,
+    "farmId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Item_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Category" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "unit" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Supplier" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT,
+    "phone" TEXT,
+    "TIN" TEXT,
     "farmId" TEXT NOT NULL,
-    "type" "StockType" NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Supplier_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Stock" (
+    "id" TEXT NOT NULL,
+    "itemId" TEXT NOT NULL,
+    "quantityInStock" INTEGER NOT NULL,
+    "quantityOutStock" INTEGER NOT NULL,
+    "balanceInStock" INTEGER NOT NULL,
+    "totalValueReceived" DOUBLE PRECISION NOT NULL,
+    "totalBalance" DOUBLE PRECISION NOT NULL,
+    "farmId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Stock_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Transaction" (
+CREATE TABLE "StockIn" (
     "id" TEXT NOT NULL,
-    "stockId" TEXT NOT NULL,
+    "receiveDate" TIMESTAMP(3) NOT NULL,
+    "quarter" TEXT,
+    "itemId" TEXT NOT NULL,
     "quantity" INTEGER NOT NULL,
-    "type" "TransactionType" NOT NULL,
-    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "totalPrice" DOUBLE PRECISION NOT NULL,
+    "specification" TEXT NOT NULL,
     "farmId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "StockIn_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "StockOut" (
+    "id" TEXT NOT NULL,
+    "requestDate" TIMESTAMP(3) NOT NULL,
+    "quarter" TEXT,
+    "itemId" TEXT NOT NULL,
+    "requestPerson" TEXT NOT NULL,
+    "requestReason" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL,
+    "totalPrice" DOUBLE PRECISION NOT NULL,
+    "specification" TEXT NOT NULL,
+    "farmId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "StockOut_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -172,6 +239,7 @@ CREATE TABLE "vaccinations" (
     "cattleId" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "vaccineType" TEXT NOT NULL,
+    "price" DOUBLE PRECISION DEFAULT 0.0,
     "vetId" TEXT,
     "farmId" TEXT,
 
@@ -245,13 +313,46 @@ CREATE UNIQUE INDEX "ProductionTotals_farmId_productType_key" ON "ProductionTota
 CREATE INDEX "WastesLog_farmId_idx" ON "WastesLog"("farmId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Stock_name_key" ON "Stock"("name");
+CREATE UNIQUE INDEX "Item_id_key" ON "Item"("id");
 
 -- CreateIndex
-CREATE INDEX "Transaction_stockId_idx" ON "Transaction"("stockId");
+CREATE UNIQUE INDEX "Item_name_key" ON "Item"("name");
 
 -- CreateIndex
-CREATE INDEX "Transaction_farmId_idx" ON "Transaction"("farmId");
+CREATE UNIQUE INDEX "Category_id_key" ON "Category"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Supplier_id_key" ON "Supplier"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Supplier_email_key" ON "Supplier"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Supplier_phone_key" ON "Supplier"("phone");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Supplier_TIN_key" ON "Supplier"("TIN");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Stock_id_key" ON "Stock"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Stock_itemId_key" ON "Stock"("itemId");
+
+-- CreateIndex
+CREATE INDEX "Stock_farmId_idx" ON "Stock"("farmId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StockIn_id_key" ON "StockIn"("id");
+
+-- CreateIndex
+CREATE INDEX "StockIn_farmId_idx" ON "StockIn"("farmId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StockOut_id_key" ON "StockOut"("id");
+
+-- CreateIndex
+CREATE INDEX "StockOut_farmId_idx" ON "StockOut"("farmId");
 
 -- CreateIndex
 CREATE INDEX "vaccinations_cattleId_idx" ON "vaccinations"("cattleId");
@@ -287,6 +388,9 @@ ALTER TABLE "Farm" ADD CONSTRAINT "Farm_ownerId_fkey" FOREIGN KEY ("ownerId") RE
 ALTER TABLE "Cattle" ADD CONSTRAINT "Cattle_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Cattle" ADD CONSTRAINT "Cattle_motherId_fkey" FOREIGN KEY ("motherId") REFERENCES "Cattle"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Production" ADD CONSTRAINT "Production_cattleId_fkey" FOREIGN KEY ("cattleId") REFERENCES "Cattle"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -302,13 +406,34 @@ ALTER TABLE "ProductionTotals" ADD CONSTRAINT "ProductionTotals_farmId_fkey" FOR
 ALTER TABLE "WastesLog" ADD CONSTRAINT "WastesLog_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Item" ADD CONSTRAINT "Item_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Item" ADD CONSTRAINT "Item_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Item" ADD CONSTRAINT "Item_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Supplier" ADD CONSTRAINT "Supplier_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Stock" ADD CONSTRAINT "Stock_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "Stock" ADD CONSTRAINT "Stock_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "StockIn" ADD CONSTRAINT "StockIn_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_stockId_fkey" FOREIGN KEY ("stockId") REFERENCES "Stock"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "StockIn" ADD CONSTRAINT "StockIn_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StockOut" ADD CONSTRAINT "StockOut_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "Item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StockOut" ADD CONSTRAINT "StockOut_farmId_fkey" FOREIGN KEY ("farmId") REFERENCES "Farm"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "vaccinations" ADD CONSTRAINT "vaccinations_cattleId_fkey" FOREIGN KEY ("cattleId") REFERENCES "Cattle"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
