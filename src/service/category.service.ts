@@ -35,6 +35,7 @@ export const CategoryService = {
 
   async updateCategory(id: string, data: Partial<Category>): Promise<Category> {
     try {
+      console.log(id, data);
       return await prisma.category.update({ where: { id }, data });
     } catch (error) {
       console.error(`Error updating category with ID ${id}:`, error);

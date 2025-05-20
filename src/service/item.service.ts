@@ -83,7 +83,14 @@ export const ItemService = {
 
   async deleteItem(id: string): Promise<void> {
     try {
-      await prisma.item.delete({ where: { id } });
+      await prisma.$transaction([
+        prisma.stock.deleteMany({
+          where: { itemId: id },
+        }),
+        prisma.item.delete({
+          where: { id },
+        }),
+      ]);
     } catch (error) {
       console.error(`Error deleting item with ID ${id}:`, error);
       throw new CustomError("Failed to delete item", 500);

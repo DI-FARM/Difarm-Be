@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { ItemService } from "../service/item.service";
 import { createItemSchema, updateItemSchema } from "../validation/items.validation";
+import ResponseHandler from "../util/responseHandler";
+import { StatusCodes } from "http-status-codes";
+
+const responseHandler = new ResponseHandler();
 
 export const ItemController = {
   async createItem(req: Request, res: Response, next: NextFunction) {
@@ -14,17 +18,20 @@ export const ItemController = {
       if (error) return res.status(400).json({ error: error.details[0].message });
 
       const newItem = await ItemService.createItem(value);
-      return res.status(201).json(newItem);
+      responseHandler.setSuccess(StatusCodes.OK, 'Item created successfully', newItem);
+      return responseHandler.send(res);
     } catch (error) {
       next(error);
     }
   },
   
 
+
   async getAllItems(req: Request, res: Response, next: NextFunction) {
     try {
       const items = await ItemService.getAllItems();
-      return res.status(200).json(items);
+      responseHandler.setSuccess(StatusCodes.OK, 'Items retrieves successfully', items);
+      return responseHandler.send(res);
     } catch (error) {
       next(error);
     }
@@ -39,8 +46,8 @@ export const ItemController = {
           }
   
           const items = await ItemService.getItemByFarmId(farmId);
-  
-          return res.status(200).json(items);
+          responseHandler.setSuccess(StatusCodes.OK, 'Items by farm retrieved successfully', items);
+          return responseHandler.send(res);
           
       } catch (error) {
           next(error);
@@ -50,7 +57,8 @@ export const ItemController = {
   async getItemById(req: Request, res: Response, next: NextFunction) {
     try {
       const item = await ItemService.getItemById(req.params.id);
-      return res.status(200).json(item);
+      responseHandler.setSuccess(StatusCodes.OK, 'Item by ID retrieved successfully', item);
+      return responseHandler.send(res);
     } catch (error) {
       next(error);
     }
@@ -62,7 +70,8 @@ export const ItemController = {
       if (error) return res.status(400).json({ error: error.details[0].message });
 
       const updatedItem = await ItemService.updateItem(req.params.id, value);
-      return res.status(200).json(updatedItem);
+      responseHandler.setSuccess(StatusCodes.OK, 'Item updated successfully', updatedItem);
+      return responseHandler.send(res);
     } catch (error) {
       next(error);
     }
@@ -70,8 +79,9 @@ export const ItemController = {
 
   async deleteItem(req: Request, res: Response, next: NextFunction) {
     try {
-      await ItemService.deleteItem(req.params.id);
-      return res.status(204).send();
+      const result = await ItemService.deleteItem(req.params.id);
+      responseHandler.setSuccess(StatusCodes.OK, 'Item deleted successfully', result);
+      return responseHandler.send(res);
     } catch (error) {
       next(error);
     }
