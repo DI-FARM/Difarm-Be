@@ -9,12 +9,13 @@ export const ItemService = {
       const existingItem = await prisma.item.findFirst({ 
         where: { 
           name: data.name, 
-          farmId: data.farmId, 
+          farmId: data.farmId,
+          supplierId: data.supplierId,
         }, 
       });
   
       if (existingItem) {
-        throw new CustomError("An item with this name already exists for the given farm.", 400);
+        throw new CustomError("An item with this name already exists for the given farm and supplier.", 400);
       }
   
       const newItem = await prisma.item.create({ data });
@@ -54,6 +55,7 @@ export const ItemService = {
       try {
           return await prisma.item.findMany({
               where: { farmId },
+              include:{category:true,supplier:true}
           });
       } catch (error) {
           console.error("Error fetching items:", error);

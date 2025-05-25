@@ -160,9 +160,9 @@ model WastesLog {
 
 model Item {
   id         String    @id @default(uuid()) @unique
-  name       String    @unique
+  name       String    
   unitPrice  Float
-  category   Category  @relation(fields: [categoryId], references: [id])
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   categoryId String
   supplier   Supplier  @relation(fields: [supplierId], references: [id])
   supplierId String
@@ -199,7 +199,7 @@ model Supplier {
 
 model Stock {
   id                 String   @id @default(uuid()) @unique
-  item               Item     @relation(fields: [itemId], references: [id])
+  item               Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
   itemId             String   @unique
   quantityInStock    Int
   quantityOutStock   Int
@@ -218,12 +218,12 @@ model StockIn {
   id            String    @id @default(uuid()) @unique
   receiveDate   DateTime
   quarter       String?
-  item          Item      @relation(fields: [itemId], references: [id])
+  item          Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
   itemId        String
   quantity      Int
   totalPrice    Float
   specification String
-  farm          Farm      @relation(fields: [farmId], references: [id])
+  farm          Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
   farmId        String
 
   createdAt DateTime  @default(now())
@@ -235,14 +235,14 @@ model StockOut {
   id            String    @id @default(uuid()) @unique
   requestDate   DateTime
   quarter       String?
-  item          Item      @relation(fields: [itemId], references: [id])
+  item          Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
   itemId        String
   requestPerson String
   requestReason String
   quantity      Int
   totalPrice    Float
   specification String
-  farm          Farm      @relation(fields: [farmId], references: [id])
+  farm          Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
   farmId        String
 
   createdAt DateTime  @default(now())
