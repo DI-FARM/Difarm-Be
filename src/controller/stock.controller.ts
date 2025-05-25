@@ -7,7 +7,6 @@ export const StockController = {
     try {
 
       const user = (req as any).user.data;
-      console.log(user);
       
       const { error, value } = stockInSchema.validate(req.body);
       if (error) return res.status(400).json({ error: error.details[0].message });

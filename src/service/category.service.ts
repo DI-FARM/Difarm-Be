@@ -21,6 +21,14 @@ export const CategoryService = {
       throw new CustomError("Failed to fetch categories", 500);
     }
   },
+  async getCategoriesByFarm(): Promise<Category[]> {
+    try {
+      return await prisma.category.findMany();
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      throw new CustomError("Failed to fetch categories", 500);
+    }
+  },
 
   async getCategoryById(id: string): Promise<Category | null> {
     try {
@@ -50,5 +58,5 @@ export const CategoryService = {
       console.error(`Error deleting category with ID ${id}:`, error);
       throw new CustomError("Failed to delete category", 500);
     }
-  }
+  },
 };

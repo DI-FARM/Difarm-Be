@@ -66,7 +66,15 @@ export const SupplierService = {
 
   async deleteSupplier(id: string): Promise<void> {
     try {
-      await prisma.supplier.delete({ where: { id } });
+        await prisma.$transaction([
+        prisma.item.deleteMany({
+          where: { supplierId: id },
+        }),
+        prisma.supplier.delete({
+          where: { id },
+        }),
+      ]);
+      // await prisma.supplier.delete({ where: { id } });
     } catch (error) {
       console.error(`Error deleting supplier with ID ${id}:`, error);
       throw new CustomError("Failed to delete supplier", 500);
