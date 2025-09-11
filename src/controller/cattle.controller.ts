@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { paginate } from "../util/paginate";
 import { searchUtil } from "../util/search";
 import cattleService from "../service/cattle.service";
+import { Gender } from "@prisma/client";
 
 export const createCattle = async (req: Request, res: Response) => {
   const {
@@ -293,6 +294,48 @@ export const getGroupedCattles = async (req: Request, res: Response) => {
       StatusCodes.INTERNAL_SERVER_ERROR,
       "Error retrieving cattle summary"
     );
+    return responseHandler.send(res);
+  }
+};
+export const getTotalCattleCount = async (req: Request, res: Response) => {
+  const {farmId} = req.params
+  const responseHandler = new ResponseHandler();
+  try {
+    const count = await prisma.cattle.count({where: {farmId}});
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Total cattle count fetched successfully",
+      count
+    );
+    return responseHandler.send(res);
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching total cattle count"
+    );
+    return responseHandler.send(res);
+  }
+};
+
+export const getGenderCount = async (req: Request, res: Response) => {
+    const { farmId } = req.params;
+  const responseHandler = new ResponseHandler();
+  try {
+    const maleCount = await prisma.cattle.count({ where: {farmId, gender: "Bull" } });
+    const femaleCount = await prisma.cattle.count({
+      where: {farmId, gender: "Cow" },
+    });
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Gender count fetched successfully",
+      { maleCount, femaleCount }
+    );
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching gender count"
+    );
+  } finally {
     return responseHandler.send(res);
   }
 };

@@ -7,6 +7,8 @@ import {
   updateCattle,
   deleteCattle,
   getGroupedCattles,
+  getTotalCattleCount,
+  getGenderCount,
 } from "../../controller/cattle.controller";
 import checkRole from "../../middleware/checkRole.middleware";
 import cattleMiddleware from "../../middleware/cattle.middleware";
@@ -59,6 +61,18 @@ router.delete(
   checkRole([Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(cattleMiddleware.checkUserCattleExists),
   deleteCattle
+);
+router.get(
+  "/total/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getTotalCattleCount
+);
+router.get(
+  "/gender/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getGenderCount
 );
 
 export default router;

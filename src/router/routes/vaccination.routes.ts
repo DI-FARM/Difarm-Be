@@ -3,7 +3,9 @@ import checkRole from "../../middleware/checkRole.middleware";
 import { Roles } from "../../util/enum/Roles.enum";
 import {
   getAllVaccinations,
+  getTotalVaccinations,
   getVaccinationById,
+  getVaccinationsByYear,
   recordVaccination,
   updateVaccination,
 } from "../../controller/vaccination.controller";
@@ -39,5 +41,18 @@ router.put(
   updateVaccination
 );
 // router.delete('/:id', checkRole([Roles.SUPERADMIN]), );
+
+router.get(
+  "/total/:farmId/:year",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getVaccinationsByYear
+);
+router.get(
+  "/total/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getTotalVaccinations
+);
 
 export default router;
