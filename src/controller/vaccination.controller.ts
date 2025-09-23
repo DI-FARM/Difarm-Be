@@ -127,6 +127,7 @@ export const getVaccinationsByYear = async (req: Request, res: Response) => {
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
+        const totalVaccinations = await prisma.vaccination.count({ where: { farmId } });
 
     const vaccinationData = [];
 
@@ -157,7 +158,8 @@ export const getVaccinationsByYear = async (req: Request, res: Response) => {
       {
         farmId,
         year: targetYear,
-        monthlyData: vaccinationData
+        monthlyData: vaccinationData,
+        total: totalVaccinations
       }
     );
   } catch (error) {
@@ -183,11 +185,11 @@ export const getInseminationsByYear = async (req: Request, res: Response) => {
     ];
 
     const inseminationData = [];
+        const totalInseminations = await prisma.insemination.count({ where: { farmId } });
 
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
       const monthStart = new Date(targetYear, monthIndex, 1);
       const monthEnd = new Date(targetYear, monthIndex + 1, 0, 23, 59, 59, 999);
-
       const inseminationCount = await prisma.insemination.count({
         where: {
           farmId,
@@ -211,7 +213,8 @@ export const getInseminationsByYear = async (req: Request, res: Response) => {
       {
         farmId,
         year: targetYear,
-        monthlyData: inseminationData
+        monthlyData: inseminationData,
+        total:totalInseminations
       }
     );
   } catch (error) {
@@ -233,7 +236,7 @@ export const getTotalVaccinations = async (req: Request, res: Response) => {
     responseHandler.setSuccess(
       StatusCodes.OK,
       "Total vaccinations fetched successfully",
-      totalVaccinations
+      {total:totalVaccinations}
     );
   } catch (error) {
     responseHandler.setError(
@@ -254,7 +257,7 @@ export const getTotalInseminations = async (req: Request, res: Response) => {
     responseHandler.setSuccess(
       StatusCodes.OK,
       "Total inseminations fetched successfully",
-      totalInseminations
+      {total:totalInseminations}
     );
   } catch (error) {
     responseHandler.setError(

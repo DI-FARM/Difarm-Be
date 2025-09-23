@@ -305,7 +305,7 @@ export const getTotalCattleCount = async (req: Request, res: Response) => {
     responseHandler.setSuccess(
       StatusCodes.OK,
       "Total cattle count fetched successfully",
-      count
+      {total: count}
     );
     return responseHandler.send(res);
   } catch (error) {
