@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { StockService } from "../service/stock.service";
 import { stockInSchema, stockOutSchema } from "../validation/stock.validation";
+import ResponseHandler from "../util/responseHandler";
+import { StatusCodes } from "http-status-codes";
+import prisma from "../db/prisma";
 
 export const StockController = {
   async addStockIn(req: Request, res: Response, next: NextFunction) {
@@ -59,7 +62,7 @@ export const getTotalStockItems = async (req: Request, res: Response) => {
       where: { farmId }
     });
 
-    const totalItems = stocks.reduce((sum, stock) => sum + stock.quantity, 0);
+    const totalItems = stocks.reduce((sum, stock) => sum + stock.quantityInStock, 0);
 
     responseHandler.setSuccess(
       StatusCodes.OK,
@@ -82,53 +85,3 @@ export const getTotalStockItems = async (req: Request, res: Response) => {
 };
 
 // Get value of available stock items
-export const getStockValue = async (req: Request, res: Response) => {
-  const { farmId } = req.params;
-  const responseHandler = new ResponseHandler();
-  
-  try {
-    const stocks = await prisma.stock.findMany({
-      where: { farmId },
-      include: {
-        transactions: true
-      }
-    });
-
-    let totalValue = 0;
-    const stockDetails = stocks.map(stock => {
-      // Calculate value based on ADDITION transactions (purchases)
-      const additionTransactions = stock.transactions.filter(t => t.type === 'ADDITION');
-      const stockValue = additionTransactions.reduce((sum, transaction) => {
-        // Assuming you have a price/cost field in transactions or calculate average cost
-        return sum + (transaction.quantity * 1); // Replace 1 with actual unit cost if available
-      }, 0);
-      
-      totalValue += stockValue;
-      
-      return {
-        id: stock.id,
-        name: stock.name,
-        quantity: stock.quantity,
-        type: stock.type,
-        value: stockValue
-      };
-    });
-
-    responseHandler.setSuccess(
-      StatusCodes.OK,
-      "Stock value fetched successfully",
-      {
-        farmId,
-        totalValue,
-        stockDetails
-      }
-    );
-  } catch (error) {
-    responseHandler.setError(
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      "Error fetching stock value"
-    );
-  } finally {
-    return responseHandler.send(res);
-  }
-};

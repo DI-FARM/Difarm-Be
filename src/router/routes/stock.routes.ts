@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   getTotalStockItems,
-  getStockValue,
+  // getStockValue,
   StockController
 } from "../../controller/stock.controller";
 import checkRole from "../../middleware/checkRole.middleware";
@@ -22,11 +22,11 @@ router.get(
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   getTotalStockItems
 );
-router.get(
-  "/total/value/:farmId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
-  asyncWrapper(farmMiddleware.checkUserFarmExists),
-  getStockValue
-);
+// router.get(
+//   "/total/value/:farmId",
+//   checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+//   asyncWrapper(farmMiddleware.checkUserFarmExists),
+//   getStockValue
+// );
 
 export default router;

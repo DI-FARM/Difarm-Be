@@ -129,7 +129,11 @@ export const getVaccinationsByYear = async (req: Request, res: Response) => {
     ];
         const totalVaccinations = await prisma.vaccination.count({ where: { farmId } });
 
-    const vaccinationData = [];
+    const vaccinationData: {
+      month: string;
+      monthNumber: number;
+      count: number;
+    }[] = [];
 
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
       const monthStart = new Date(targetYear, monthIndex, 1);
@@ -184,7 +188,11 @@ export const getInseminationsByYear = async (req: Request, res: Response) => {
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    const inseminationData = [];
+    const inseminationData: {
+      month: string;
+      monthNumber: number;
+      count: number;
+    }[] = [];
         const totalInseminations = await prisma.insemination.count({ where: { farmId } });
 
     for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
