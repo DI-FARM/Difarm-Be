@@ -4,7 +4,9 @@ import {
   createProduction,
   deleteProduction,
   getAllProductions,
+  getProductionByDate,
   getProductionById,
+  getProductionByTypeAndDate,
   updateProduction,
 } from "../../controller/production.controller";
 import checkRole from "../../middleware/checkRole.middleware";
@@ -44,6 +46,19 @@ router.delete(
   checkRole([Roles.ADMIN, Roles.SUPERADMIN]),
   asyncWrapper(productionMiddleware.checkUserproductionExists),
   deleteProduction
+);
+
+router.get(
+  "/total/:farmId",
+  checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getProductionByDate
+);
+router.get(
+  "/type/total/:farmId",
+  checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getProductionByTypeAndDate
 );
 
 export default router;

@@ -171,3 +171,103 @@ export const deleteProduction = async (req: Request, res: Response) => {
     }
     responseHandler.send(res);
 };
+
+// Get all production categories value by date
+export const getProductionByDate = async (req: Request, res: Response) => {
+  const { farmId } = req.params;
+  const { date } = req.query;
+  const responseHandler = new ResponseHandler();
+  
+  try {
+    const targetDate = new Date(date as string);
+    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+
+    const productions = await prisma.productionTransaction.findMany({
+      where: {
+        farmId,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      }
+    });
+
+    const productionByType = productions.reduce((acc, prod) => {
+      if (!acc[prod.productType]) {
+        acc[prod.productType] = { quantity: 0, value: 0 };
+      }
+      acc[prod.productType].quantity += prod.quantity;
+      acc[prod.productType].value += prod.value;
+      return acc;
+    }, {} as Record<string, { quantity: number; value: number }>);
+
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Production by date fetched successfully",
+      {
+        date: date,
+        farmId,
+        productions: productionByType,
+        totalValue: productions.reduce((sum, p) => sum + p.value, 0)
+      }
+    );
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching production by date"
+    );
+  } finally {
+    return responseHandler.send(res);
+  }
+};
+
+// Get production by specific type on specific date
+// Get production by type on specific date
+export const getProductionByTypeAndDate = async (req: Request, res: Response) => {
+  const { farmId } = req.params;
+  const { date } = req.query;
+  const responseHandler = new ResponseHandler();
+  
+  try {
+    const targetDate = new Date(date as string);
+    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+
+    const productions = await prisma.production.findMany({
+      where: {
+        farmId,
+        productionDate: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      }
+    });
+
+    const productionByType = productions.reduce((acc, prod) => {
+      if (!acc[prod.productName]) {
+        acc[prod.productName] = 0;
+      }
+      acc[prod.productName] += prod.quantity;
+      return acc;
+    }, {} as Record<string, number>);
+
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Production by type fetched successfully",
+      {
+        date,
+        farmId,
+        productionByType,
+        totalProductions: productions.length
+      }
+    );
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching production by type and date"
+    );
+  } finally {
+    return responseHandler.send(res);
+  }
+};

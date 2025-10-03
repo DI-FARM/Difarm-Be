@@ -116,4 +116,163 @@ export const getAllVaccinations = async (req: Request, res: Response) => {
     return responseHandler.send(res);
   };
   
+// Get vaccination count by month for a year
+export const getVaccinationsByYear = async (req: Request, res: Response) => {
+  const { farmId, year } = req.params;
+  const responseHandler = new ResponseHandler();
   
+  try {
+    const targetYear = parseInt(year);
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+        const totalVaccinations = await prisma.vaccination.count({ where: { farmId } });
+
+    const vaccinationData: {
+      month: string;
+      monthNumber: number;
+      count: number;
+    }[] = [];
+
+    for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+      const monthStart = new Date(targetYear, monthIndex, 1);
+      const monthEnd = new Date(targetYear, monthIndex + 1, 0, 23, 59, 59, 999);
+
+      const vaccinationCount = await prisma.vaccination.count({
+        where: {
+          farmId,
+          date: {
+            gte: monthStart,
+            lte: monthEnd
+          }
+        }
+      });
+
+      vaccinationData.push({
+        month: months[monthIndex],
+        monthNumber: monthIndex + 1,
+        count: vaccinationCount
+      });
+    }
+
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      `Vaccinations for ${year} fetched successfully`,
+      {
+        farmId,
+        year: targetYear,
+        monthlyData: vaccinationData,
+        total: totalVaccinations
+      }
+    );
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching vaccinations by year"
+    );
+  } finally {
+    return responseHandler.send(res);
+  }
+};
+
+// Get insemination count by month for a year
+export const getInseminationsByYear = async (req: Request, res: Response) => {
+  const { farmId, year } = req.params;
+  const responseHandler = new ResponseHandler();
+  
+  try {
+    const targetYear = parseInt(year);
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const inseminationData: {
+      month: string;
+      monthNumber: number;
+      count: number;
+    }[] = [];
+        const totalInseminations = await prisma.insemination.count({ where: { farmId } });
+
+    for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+      const monthStart = new Date(targetYear, monthIndex, 1);
+      const monthEnd = new Date(targetYear, monthIndex + 1, 0, 23, 59, 59, 999);
+      const inseminationCount = await prisma.insemination.count({
+        where: {
+          farmId,
+          date: {
+            gte: monthStart,
+            lte: monthEnd
+          }
+        }
+      });
+
+      inseminationData.push({
+        month: months[monthIndex],
+        monthNumber: monthIndex + 1,
+        count: inseminationCount
+      });
+    }
+
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      `Inseminations for ${year} fetched successfully`,
+      {
+        farmId,
+        year: targetYear,
+        monthlyData: inseminationData,
+        total:totalInseminations
+      }
+    );
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching inseminations by year"
+    );
+  } finally {
+    return responseHandler.send(res);
+  }
+};
+
+export const getTotalVaccinations = async (req: Request, res: Response) => {
+  const { farmId } = req.params;
+  const responseHandler = new ResponseHandler();
+  
+  try {
+    const totalVaccinations = await prisma.vaccination.count({ where: { farmId } });
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Total vaccinations fetched successfully",
+      {total:totalVaccinations}
+    );
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching total vaccinations"
+    );
+  } finally {
+    return responseHandler.send(res);
+  }
+};
+
+export const getTotalInseminations = async (req: Request, res: Response) => {
+  const { farmId } = req.params;
+  const responseHandler = new ResponseHandler();
+  
+  try {
+    const totalInseminations = await prisma.insemination.count({ where: { farmId } });
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Total inseminations fetched successfully",
+      {total:totalInseminations}
+    );
+  } catch (error) {
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching total inseminations"
+    );
+  } finally {
+    return responseHandler.send(res);
+  }
+};

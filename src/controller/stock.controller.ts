@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { StockService } from "../service/stock.service";
 import { stockInSchema, stockOutSchema } from "../validation/stock.validation";
+import ResponseHandler from "../util/responseHandler";
+import { StatusCodes } from "http-status-codes";
+import prisma from "../db/prisma";
 
 export const StockController = {
   async addStockIn(req: Request, res: Response, next: NextFunction) {
@@ -48,3 +51,37 @@ export const StockController = {
     }
   }
 };
+
+// Get total available stock items
+export const getTotalStockItems = async (req: Request, res: Response) => {
+  const { farmId } = req.params;
+  const responseHandler = new ResponseHandler();
+  
+  try {
+    const stocks = await prisma.stock.findMany({
+      where: { farmId }
+    });
+
+    const totalItems = stocks.reduce((sum, stock) => sum + stock.quantityInStock, 0);
+
+    responseHandler.setSuccess(
+      StatusCodes.OK,
+      "Total stock items fetched successfully",
+      {
+        farmId,
+        totalItems,
+        stockTypes: stocks.length
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    responseHandler.setError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Error fetching total stock items"
+    );
+  } finally {
+    return responseHandler.send(res);
+  }
+};
+
+// Get value of available stock items

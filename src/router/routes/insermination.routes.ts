@@ -11,6 +11,7 @@ import { inserminationValidationMiddleware } from "../../middleware/vacinationVa
 import asyncWrapper from "../../util/asyncWrapper";
 import farmMiddleware from "../../middleware/farm.middleware";
 import inseminationMiddleware from "../../middleware/insemination.middleware";
+import { getInseminationsByYear, getTotalInseminations } from "../../controller/vaccination.controller";
 
 const router = Router();
 
@@ -39,5 +40,16 @@ router.put(
   updateInsemination
 );
 // router.delete('/:id', checkRole([Roles.SUPERADMIN]), );
-
+router.get(
+  "/total/:farmId/:year",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getInseminationsByYear
+);
+router.get(
+  "/total/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  getTotalInseminations
+);
 export default router;
