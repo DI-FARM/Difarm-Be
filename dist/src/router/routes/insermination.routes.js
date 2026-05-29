@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const Roles_enum_1 = require("../../util/enum/Roles.enum");
+const insermination_controller_1 = require("../../controller/insermination.controller");
+const vacinationValid_middleware_1 = require("../../middleware/vacinationValid.middleware");
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const insemination_middleware_1 = __importDefault(require("../../middleware/insemination.middleware"));
+const router = (0, express_1.Router)();
+router.post("/", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), vacinationValid_middleware_1.inserminationValidationMiddleware, insermination_controller_1.recordInsemination);
+router.get("/:farmId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), insermination_controller_1.getAllInseminations);
+router.get("insemination/:inseminationId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(insemination_middleware_1.default.checkInseminationExists), insermination_controller_1.getInseminationById);
+router.put("/:inseminationId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.MANAGER, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.SUPERADMIN]), (0, asyncWrapper_1.default)(insemination_middleware_1.default.checkInseminationExists), insermination_controller_1.updateInsemination);
+// router.delete('/:id', checkRole([Roles.SUPERADMIN]), );
+exports.default = router;

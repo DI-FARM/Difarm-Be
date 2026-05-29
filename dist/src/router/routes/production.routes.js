@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const Roles_enum_1 = require("../../util/enum/Roles.enum");
+const production_controller_1 = require("../../controller/production.controller");
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const productionValidation_middleware_1 = __importDefault(require("../../middleware/productionValidation.middleware"));
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const production_middleware_1 = __importDefault(require("../../middleware/production.middleware"));
+const router = (0, express_1.Router)();
+router.post("/:farmId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), productionValidation_middleware_1.default, (0, asyncWrapper_1.default)(production_controller_1.createProduction));
+router.get("/:farmId", (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), production_controller_1.getAllProductions);
+router.get("/product/:id", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(production_middleware_1.default.checkUserproductionExists), production_controller_1.getProductionById);
+router.put("/:id", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(production_middleware_1.default.checkUserproductionExists), production_controller_1.updateProduction);
+router.delete("/:id", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.SUPERADMIN]), (0, asyncWrapper_1.default)(production_middleware_1.default.checkUserproductionExists), production_controller_1.deleteProduction);
+exports.default = router;

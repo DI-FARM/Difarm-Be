@@ -13,10 +13,22 @@ import globalTypes from './src/index'; //this line imports extended express requ
 dotenv.config();
 
 const app = express();
+const allowedOrigins = [
+    process.env.FRONTEND_UrL,
+    'http://localhost:3000',
+    'http://localhost:3001',
+].filter((origin): origin is string => Boolean(origin));
+
 const corsOptions = {
-    origin:process.env.FRONTEND_UrL,
-    credentials:true,
-}
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`CORS blocked for origin: ${origin}`));
+        }
+    },
+    credentials: true,
+};
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));

@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const client_1 = require("@prisma/client");
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const wasteLog_controller_1 = __importDefault(require("../../controller/wasteLog.controller"));
+const validation_1 = __importDefault(require("../../middleware/validation/validation"));
+const wasteLog_validation_1 = __importDefault(require("../../validation/wasteLog.validation"));
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const wasteLog_middleware_1 = __importDefault(require("../../middleware/wasteLog.middleware"));
+const router = (0, express_1.Router)();
+router.get("/:farmId", (0, checkRole_middleware_1.default)([client_1.Roles.SUPERADMIN, client_1.Roles.ADMIN]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), (0, asyncWrapper_1.default)(wasteLog_controller_1.default.allWasteLogs));
+router.post("/:farmId", (0, checkRole_middleware_1.default)([client_1.Roles.SUPERADMIN, client_1.Roles.ADMIN]), (0, validation_1.default)(wasteLog_validation_1.default.newWasteLogSchema), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), (0, asyncWrapper_1.default)(wasteLog_controller_1.default.createWasteLog));
+router.get("/waste/:wasteId", (0, checkRole_middleware_1.default)([client_1.Roles.SUPERADMIN, client_1.Roles.ADMIN]), (0, asyncWrapper_1.default)(wasteLog_middleware_1.default.checkWasteLogExists), (0, asyncWrapper_1.default)(wasteLog_controller_1.default.singleWasteLog));
+router.patch("/:wasteId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN]), (0, validation_1.default)(wasteLog_validation_1.default.newWasteLogSchema), (0, asyncWrapper_1.default)(wasteLog_middleware_1.default.checkWasteLogExists), (0, asyncWrapper_1.default)(wasteLog_controller_1.default.updateWasteLog));
+router.delete("/:wasteId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN]), (0, asyncWrapper_1.default)(wasteLog_middleware_1.default.checkWasteLogExists), (0, asyncWrapper_1.default)(wasteLog_controller_1.default.deleteWasteLog));
+exports.default = router;

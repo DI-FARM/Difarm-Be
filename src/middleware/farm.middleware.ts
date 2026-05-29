@@ -13,12 +13,13 @@ const checkUserFarmExists = async (
 ) => {
   const { farmId } = req.params;
   const user = (req as any).user.data;
-  let data: Farm | null
+  let data: Farm | null;
   if (user.role === Roles.SUPERADMIN) {
-     data = await farmService.getSingleFarm(farmId)
-  }
-  else{
-     data = await farmService.getUserFarmById(farmId,user.userId);
+    data = await farmService.getSingleFarm(farmId);
+  } else if (user.role === Roles.VETERINARIAN && user.id) {
+    data = await farmService.getFarmForVeterinarian(farmId, user.id);
+  } else {
+    data = await farmService.getUserFarmById(farmId, user.userId);
   }
 
   if (!data) {

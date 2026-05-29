@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const productionTotals_controller_1 = __importDefault(require("../../controller/productionTotals.controller"));
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const client_1 = require("@prisma/client");
+const prodTotals_middleware_1 = __importDefault(require("../../middleware/prodTotals.middleware"));
+const validation_1 = __importDefault(require("../../middleware/validation/validation"));
+const prodTotalsSchema_1 = __importDefault(require("../../validation/prodTotalsSchema"));
+const router = (0, express_1.Router)();
+router.post("/:farmId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, validation_1.default)(prodTotalsSchema_1.default.newProdInfoSchema), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), (0, asyncWrapper_1.default)(productionTotals_controller_1.default.newProductInfo));
+router.patch("/:infoId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, validation_1.default)(prodTotalsSchema_1.default.updatenewProdInfoSchema), (0, asyncWrapper_1.default)(prodTotals_middleware_1.default.checkProdInfoExists), (0, asyncWrapper_1.default)(productionTotals_controller_1.default.editProductInfo));
+router.delete("/:infoId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(prodTotals_middleware_1.default.checkProdInfoExists), (0, asyncWrapper_1.default)(productionTotals_controller_1.default.removeProductInfo));
+router.get("/:farmId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER, client_1.Roles.SUPERADMIN]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), (0, asyncWrapper_1.default)(productionTotals_controller_1.default.AllFarmProdTotals));
+router.get("/product-info/:infoId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(prodTotals_middleware_1.default.checkProdInfoExists), (0, asyncWrapper_1.default)(productionTotals_controller_1.default.getSingleProductInfo));
+exports.default = router;

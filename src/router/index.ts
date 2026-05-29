@@ -12,7 +12,8 @@ import stockTransactionsRoute from './routes/stockTransaction.routes'
 import isAuthorized from '../middleware/isAuthorized.middleware';
 import vaccinationRoute from '../router/routes/vaccination.routes';
 import veterinarianRoute from '../router/routes/veterinarian.routes';
-import inserminationRoute from '../router/routes/insermination.routes'
+import inserminationRoute from '../router/routes/insermination.routes';
+import activityLogRoute from '../router/routes/activityLog.routes';
 
 const routes = express.Router();
 
@@ -28,6 +29,7 @@ routes.use('/stocks', isAuthorized, stockRoute)
 routes.use('/stock-transactions', isAuthorized, stockTransactionsRoute)
 routes.use('/vaccinations', isAuthorized, vaccinationRoute)
 routes.use('/veterinarians', isAuthorized, veterinarianRoute)
-routes.use('/inserminations', isAuthorized, inserminationRoute)
+routes.use('/inserminations', isAuthorized, inserminationRoute);
+routes.use('/activity-logs', activityLogRoute);
 
 export default routes;

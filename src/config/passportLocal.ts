@@ -34,7 +34,10 @@ passport.use(new LocalStrategy({
       return done(null, false);
     }
 
-    // const userData = await userModel.findOne({accountId: userFound._id})
+    if (!userFound.status) {
+      return done(null, false);
+    }
+
     const isPasswordValid = userFound.password ? await comparePassword(password, userFound.password) : false;
 
     if (!isPasswordValid) {

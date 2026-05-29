@@ -5,6 +5,7 @@ import {
   getFarmById,
   updateFarm,
   deleteFarm,
+  activateFarm,
 } from "../../controller/farm.controller";
 import checkRole from "../../middleware/checkRole.middleware";
 import farmValidation from "../../middleware/farmValidation.middleware";
@@ -14,7 +15,12 @@ import { Roles } from "@prisma/client";
 
 const router = Router();
 
-router.post("/", checkRole(["SUPERADMIN"]), farmValidation, createFarm);
+router.post(
+  "/",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  farmValidation,
+  createFarm
+);
 router.get("/", getFarms);
 router.get(
   "/farm/:farmId",
@@ -26,6 +32,12 @@ router.put(
   checkRole([Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   updateFarm
+);
+router.patch(
+  "/:farmId/activate",
+  checkRole([Roles.SUPERADMIN]),
+  asyncWrapper(farmMiddleware.checkUserFarmExists),
+  activateFarm
 );
 router.delete(
   "/:id",

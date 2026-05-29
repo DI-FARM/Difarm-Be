@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc",
     "dev": "nodemon --exec babel-node --require ts-node/register server.ts",
-    "prod": "tsc && node ./dist/server.js"
+    "prod": "tsc && node ./dist/server.js",
+    "seed": "prisma db seed"
   },
   "author": "",
   "license": "ISC",
@@ -51,6 +52,7 @@
     "typescript": "^5.5.3"
   },
   "prisma": {
-    "schema": "src/prisma/schema.prisma"
+    "schema": "src/prisma/schema.prisma",
+    "seed": "npx ts-node src/prisma/seed.ts"
   }
 }

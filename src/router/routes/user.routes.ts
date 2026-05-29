@@ -21,16 +21,16 @@ const router = Router();
 
 router.post("/", checkRole([Roles.SUPERADMIN, Roles.ADMIN]), createUser);
 router.get(
+  "/detail/:userId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  asyncWrapper(userMiddleware.checkUserExists),
+  getUserById
+);
+router.get(
   "/:farmId",
   checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   getAllUsers
-);
-router.get(
-  "/:userId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
-  asyncWrapper(userMiddleware.checkUserExists),
-  getUserById
 );
 router.put(
   "/:userId",

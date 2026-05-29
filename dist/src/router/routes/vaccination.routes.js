@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const Roles_enum_1 = require("../../util/enum/Roles.enum");
+const vaccination_controller_1 = require("../../controller/vaccination.controller");
+const vacinationValid_middleware_1 = require("../../middleware/vacinationValid.middleware");
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const vaccination_middleware_1 = __importDefault(require("../../middleware/vaccination.middleware"));
+const router = (0, express_1.Router)();
+router.post("/", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), vacinationValid_middleware_1.vaccinationValidationMiddleware, vaccination_controller_1.recordVaccination);
+router.get("/:farmId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), vaccination_controller_1.getAllVaccinations);
+router.get("/vaccine/:vaccineId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(vaccination_middleware_1.default.checkUservaccineExists), vaccination_controller_1.getVaccinationById);
+router.put("/:vaccineId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(vaccination_middleware_1.default.checkUservaccineExists), vaccination_controller_1.updateVaccination);
+// router.delete('/:id', checkRole([Roles.SUPERADMIN]), );
+exports.default = router;

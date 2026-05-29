@@ -4,11 +4,13 @@ import ResponseHandler from "../util/responseHandler";
 import prisma from "../db/prisma";
 import { sendEmail } from "../service/sendEmail.service";
 import { Roles } from "@prisma/client";
+import { createLog } from "../service/activityLog.service";
 
 const responseHandler = new ResponseHandler();
 
 export const createFarm = async (req: Request, res: Response) => {
   const { name, location, size, type, ownerId } = req.body;
+  const requestUser = (req as any).user?.data;
 
   try {
     const nameExist = await prisma.farm.findUnique({ where: { name } });
@@ -21,6 +23,9 @@ export const createFarm = async (req: Request, res: Response) => {
       return responseHandler.send(res);
     }
 
+    const isSuperAdmin = requestUser?.role === Roles.SUPERADMIN;
+    const status = isSuperAdmin;
+
     const newFarm = await prisma.farm.create({
       data: {
         name,
@@ -28,40 +33,122 @@ export const createFarm = async (req: Request, res: Response) => {
         size,
         type,
         ownerId,
+        status,
       },
     });
-    responseHandler.setSuccess(201, "Farm created successfully", newFarm);
+    if (requestUser?.id) {
+      createLog({
+        accountId: requestUser.id,
+        userId: requestUser.userId,
+        action: "CREATE_FARM",
+        entityType: "farm",
+        entityId: newFarm.id,
+        details: `Farm ${newFarm.name} created`,
+      }).then(() => {});
+    }
+    responseHandler.setSuccess(
+      201,
+      isSuperAdmin
+        ? "Farm created successfully"
+        : "Farm created and pending super admin activation",
+      newFarm
+    );
   } catch (error) {
     console.log(error);
-
     responseHandler.setError(500, "Error creating farm");
   }
 
   return responseHandler.send(res);
 };
 
+export const activateFarm = async (req: Request, res: Response) => {
+  const { farmId } = req.params;
+  const requestUser = (req as any).user?.data;
+  try {
+    const farm = await prisma.farm.update({
+      where: { id: farmId },
+      data: { status: true },
+    });
+    if (requestUser?.id) {
+      createLog({
+        accountId: requestUser.id,
+        userId: requestUser.userId,
+        action: "ACTIVATE_FARM",
+        entityType: "farm",
+        entityId: farmId,
+        details: `Farm ${farm.name} activated`,
+      }).then(() => {});
+    }
+    responseHandler.setSuccess(200, "Farm activated successfully", farm);
+  } catch (error) {
+    responseHandler.setError(500, "Error activating farm");
+  }
+  return responseHandler.send(res);
+};
+
 export const getFarms = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user.data;
-    let farms;
+    const { status, search, location, ownerId } = req.query;
+
+    const include = {
+      owner: { include: { account: { select: { username: true } } } },
+    };
+
     if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
-       farms = await prisma.farm.findMany({
-        where: { OR: [{ ownerId: user.userId}, {managerId: user.userId }] },
-        include: { owner: true },
+      const farms = await prisma.farm.findMany({
+        where: { OR: [{ ownerId: user.userId }, { managerId: user.userId }] },
+        include,
       });
-    }
-    else{
-      farms = await prisma.farm.findMany({
-        include: { owner: true },
-      });
+      responseHandler.setSuccess(200, "Farms retrieved successfully", farms);
+      return responseHandler.send(res);
     }
 
-    responseHandler.setSuccess(200, "Farms retrieved successfully", farms);
+    if (user.role === Roles.SUPERADMIN) {
+      const where: any = {};
+      if (status !== undefined && status !== "") {
+        where.status = String(status) === "true";
+      }
+      if (search && typeof search === "string" && search.trim()) {
+        where.name = { contains: search.trim(), mode: "insensitive" };
+      }
+      if (location && typeof location === "string" && location.trim()) {
+        where.location = { contains: location.trim(), mode: "insensitive" };
+      }
+      if (ownerId && typeof ownerId === "string" && ownerId.trim()) {
+        where.ownerId = ownerId.trim();
+      }
+
+      const farms = await prisma.farm.findMany({
+        where,
+        include,
+        orderBy: { createdAt: "desc" },
+      });
+      responseHandler.setSuccess(200, "Farms retrieved successfully", farms);
+      return responseHandler.send(res);
+    }
+
+    if (user.role === Roles.VETERINARIAN && user.id) {
+      const vetRecords = await prisma.veterinarian.findMany({
+        where: { accountId: user.id, farmId: { not: null } },
+        select: { farmId: true },
+      });
+      const farmIds = vetRecords.map((v) => v.farmId).filter(Boolean) as string[];
+      const farms = await prisma.farm.findMany({
+        where: { id: { in: farmIds } },
+        include,
+      });
+      responseHandler.setSuccess(200, "Farms retrieved successfully", farms);
+      return responseHandler.send(res);
+    }
+
+    responseHandler.setSuccess(200, "Farms retrieved successfully", []);
+    return responseHandler.send(res);
   } catch (error) {
     responseHandler.setError(500, "Error fetching farms");
   }
 
-  responseHandler.send(res);
+  return responseHandler.send(res);
 };
 
 export const getFarmById = async (req: Request, res: Response) => {

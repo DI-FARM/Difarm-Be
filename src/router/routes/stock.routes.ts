@@ -35,13 +35,13 @@ router.get(
 );
 router.put(
   "/:id",
-  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(stockMiddleware.checkUserStockExists),
   updateStock
 );
 router.delete(
   "/:id",
-  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(stockMiddleware.checkUserStockExists),
   deleteStock
 );

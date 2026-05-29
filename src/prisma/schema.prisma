@@ -14,15 +14,17 @@ datasource db {
 }
 
 model Account {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  email     String?  @unique
-  phone     String?  @unique
-  role      Roles    @default(ADMIN)
-  password  String?
-  status    Boolean  @default(true)
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String?  @unique
+  phone        String?  @unique
+  role         Roles    @default(ADMIN)
+  password     String?
+  status       Boolean  @default(true)
 
-  users     User[]
+  users        User[]
+  activityLogs ActivityLog[]
+  veterinarian Veterinarian?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt @default(now())
@@ -32,6 +34,7 @@ enum Roles {
   SUPERADMIN
   ADMIN
   MANAGER
+  VETERINARIAN
 }
 
 model User {
@@ -259,17 +262,35 @@ model Vaccination {
 model Veterinarian {
   id            String         @id @default(uuid())
   name          String
-  farmId       String?          @default(uuid())
+  farmId        String?
   phone         String
   email         String         @unique
+  accountId     String?        @unique
   vaccinations  Vaccination[]
   inseminations Insemination[]
-  farm        Farm?     @relation(fields: [farmId], references: [id])
-
+  farm          Farm?          @relation(fields: [farmId], references: [id])
+  account       Account?       @relation(fields: [accountId], references: [id])
 
   @@map("veterinarians")
   @@index([farmId])
+  @@index([accountId])
+}
 
+model ActivityLog {
+  id          String   @id @default(uuid())
+  accountId   String
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  details     String?
+  createdAt   DateTime @default(now())
+
+  account     Account  @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Insemination {

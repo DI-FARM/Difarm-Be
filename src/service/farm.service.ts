@@ -6,6 +6,14 @@ const getUserFarmById = async (farmId: string, userId: string) => {
   });
   return result;
 };
+
+const getFarmForVeterinarian = async (farmId: string, accountId: string) => {
+  const vet = await prisma.veterinarian.findFirst({
+    where: { farmId, accountId },
+    include: { farm: true },
+  });
+  return vet?.farm ?? null;
+};
 const getSingleFarm = async (farmId: string) => {
   const result = await prisma.farm.findUnique({
     where: { id: farmId },
@@ -31,6 +39,7 @@ async function removeManagerFromFarm(id: string) {
 export default {
   getUserFarmById,
   getSingleFarm,
+  getFarmForVeterinarian,
   updateFarm,
   removeManagerFromFarm,
 };

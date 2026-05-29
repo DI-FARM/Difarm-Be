@@ -1,0 +1,24 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const users_controller_1 = require("../../controller/users.controller");
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const Roles_enum_1 = require("../../util/enum/Roles.enum");
+const user_middleware_1 = __importDefault(require("../../middleware/user.middleware"));
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const validation_1 = __importDefault(require("../../middleware/validation/validation"));
+const userSchema_validation_1 = __importDefault(require("../../validation/userSchema.validation"));
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const accountSchema_validation_1 = __importDefault(require("../../validation/accountSchema.validation"));
+const account_middleware_1 = __importDefault(require("../../middleware/account.middleware"));
+const router = (0, express_1.Router)();
+router.post("/", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN]), users_controller_1.createUser);
+router.get("/:farmId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), users_controller_1.getAllUsers);
+router.get("/:userId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN]), (0, asyncWrapper_1.default)(user_middleware_1.default.checkUserExists), users_controller_1.getUserById);
+router.put("/:userId", (0, validation_1.default)(userSchema_validation_1.default.userSchema), (0, asyncWrapper_1.default)(user_middleware_1.default.checkUserExists), users_controller_1.updateUser);
+router.put("/account/:accId", (0, validation_1.default)(accountSchema_validation_1.default.accountSchema), (0, asyncWrapper_1.default)(account_middleware_1.default.checkAccountExists), users_controller_1.updateAccount);
+router.delete("/:userId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN]), (0, asyncWrapper_1.default)(user_middleware_1.default.checkUserExists), users_controller_1.deleteUser);
+exports.default = router;

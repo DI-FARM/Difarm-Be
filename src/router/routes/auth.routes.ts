@@ -1,6 +1,16 @@
 import { Router, Request, Response } from 'express';
 import signupValidation from '../../middleware/signupValidation.middleware';
-import { forgotPassword, getAllUsers, registerUser,registerSuperAdmin, resetPassword, userLogin, userLogout} from '../../controller/auth.controller';
+import {
+  forgotPassword,
+  getAllUsers,
+  registerUser,
+  registerSuperAdmin,
+  resetPassword,
+  userLogin,
+  userLogout,
+  activateAccount,
+  registerVeterinarian,
+} from '../../controller/auth.controller';
 import asyncWrapper from "../../util/asyncWrapper";
 import validate from "../../middleware/validation/validation";
 import resetPasswordSchemas from "../../validation/resetPasswordSchemas";
@@ -27,7 +37,21 @@ route.post(
 );
 route.post('/login', userLogin);
 route.post('/logout', userLogout);
-route.get('/users', getAllUsers);
+route.get('/users', isAuthorized, checkRole([Roles.SUPERADMIN]), getAllUsers);
+route.patch(
+  '/accounts/:accountId/activate',
+  isAuthorized,
+  checkRole([Roles.SUPERADMIN]),
+  activateAccount
+);
+route.post(
+  '/register/veterinarian',
+  isAuthorized,
+  checkRole([Roles.ADMIN]),
+  asyncWrapper(authMiddleware.checkInitialBody),
+  signupValidation,
+  registerVeterinarian
+);
 route.get(
   "/forgotpass/",
   validate(resetPasswordSchemas.forgotPasswordSchema),

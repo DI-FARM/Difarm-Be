@@ -43,7 +43,7 @@ export const getAllVaccinations = async (req: Request, res: Response) => {
   try {
     let vaccinations;
 
-    if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
+    if (user.role === Roles.ADMIN || user.role === Roles.MANAGER || user.role === Roles.VETERINARIAN) {
       vaccinations = await prisma.vaccination.findMany({
         where: { farmId },
         orderBy: { date: 'desc' },
@@ -61,7 +61,7 @@ export const getAllVaccinations = async (req: Request, res: Response) => {
     }
 
     const totalCount = await prisma.vaccination.count({
-      where: user.role === Roles.ADMIN || user.role === Roles.MANAGER ? { farmId } : {},
+      where: (user.role === Roles.ADMIN || user.role === Roles.MANAGER || user.role === Roles.VETERINARIAN) ? { farmId } : {},
     });
 
 

@@ -17,31 +17,32 @@ const router = Router();
 
 router.post(
   "/:farmId",
-  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   productValidation,
   asyncWrapper(createProduction)
 );
 router.get(
   "/:farmId",
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   getAllProductions
 );
 router.get(
   "/product/:id",
-  checkRole([Roles.SUPERADMIN,Roles.ADMIN, Roles.MANAGER]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(productionMiddleware.checkUserproductionExists),
   getProductionById
 );
 router.put(
   "/:id",
-  checkRole([Roles.ADMIN, Roles.MANAGER]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(productionMiddleware.checkUserproductionExists),
   updateProduction
 );
 router.delete(
   "/:id",
-  checkRole([Roles.ADMIN, Roles.SUPERADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(productionMiddleware.checkUserproductionExists),
   deleteProduction
 );

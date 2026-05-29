@@ -22,13 +22,13 @@ router.post(
 );
 router.get(
   "/:farmId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN,Roles.MANAGER]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER, Roles.VETERINARIAN]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   getAllVeterinarians
 );
 router.get(
   "/vet/:vetId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER, Roles.VETERINARIAN]),
   asyncWrapper(veterinarianMiddleware.checkVetExists),
   getVeterinarianById
 );

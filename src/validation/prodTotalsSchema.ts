@@ -5,10 +5,10 @@ const newProdInfoSchema = Joi.object({
     totalQuantity: Joi.number().greater(0).required(),
     pricePerUnit: Joi.number().greater(0).required(),
 });
-const updatenewProdInfoSchame = Joi.object({
+const updatenewProdInfoSchema = Joi.object({
     productType: Joi.string().valid('MILK','MEAT'),
     totalQuantity: Joi.number().greater(0),
     pricePerUnit: Joi.number().greater(0),
 });
 
-export default {newProdInfoSchema, updatenewProdInfoSchame};
+export default {newProdInfoSchema, updatenewProdInfoSchema};

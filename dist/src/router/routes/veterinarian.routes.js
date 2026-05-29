@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const Roles_enum_1 = require("../../util/enum/Roles.enum");
+const veterianarian_controller_1 = require("../../controller/veterianarian.controller");
+const vacinationValid_middleware_1 = require("../../middleware/vacinationValid.middleware");
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const veterinarian_middleware_1 = __importDefault(require("../../middleware/veterinarian.middleware"));
+const router = (0, express_1.Router)();
+router.post("/", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), vacinationValid_middleware_1.veterinValidationMiddleware, veterianarian_controller_1.createVeterinarian);
+router.get("/:farmId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), veterianarian_controller_1.getAllVeterinarians);
+router.get("/vet/:vetId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(veterinarian_middleware_1.default.checkVetExists), veterianarian_controller_1.getVeterinarianById);
+router.put("/:vetId", (0, checkRole_middleware_1.default)([Roles_enum_1.Roles.SUPERADMIN, Roles_enum_1.Roles.ADMIN, Roles_enum_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(veterinarian_middleware_1.default.checkVetExists), veterianarian_controller_1.updateVeterinarian);
+// router.delete('/:id', checkRole([Roles.SUPERADMIN]), );
+exports.default = router;

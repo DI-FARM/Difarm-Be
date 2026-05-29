@@ -13,6 +13,7 @@ import { Roles } from "@prisma/client";
 import { use } from "passport";
 import farmService from "../service/farm.service";
 import { paginate } from "../util/paginate";
+import { createLog } from "../service/activityLog.service";
 
 const responseHandler = new ResponseHandler();
 
@@ -42,34 +43,43 @@ export const registerUser = async (req: Request, res: Response) => {
         }
 
         if (RequestUser.role === Roles.SUPERADMIN) {
-            role = Roles.ADMIN
+            role = Roles.ADMIN;
+        } else {
+            role = Roles.MANAGER;
         }
-        else{
-            role = Roles.MANAGER
-        }
+        const inactiveUntilActivated =
+            (RequestUser.role === Roles.ADMIN && role === Roles.MANAGER);
         const userAccount = await prisma.account.create({
             data: {
                 username,
                 email,
                 phone,
                 role,
-                password: await hashPassword(password)
-            }
+                password: await hashPassword(password),
+                status: !inactiveUntilActivated,
+            },
         });
 
         const userData = {
             accountId: userAccount.id,
             fullname,
-            gender
+            gender,
         };
         const user = await prisma.user.create({ data: userData });
 
-        if (RequestUser.role === Roles.ADMIN) {
-            const body = {
-                managerId: user.id
-            }
-            await farmService.updateFarm(farmId,body)
+        if (RequestUser.role === Roles.ADMIN && farmId) {
+            const body = { managerId: user.id };
+            await farmService.updateFarm(farmId, body);
         }
+
+        createLog({
+            accountId: RequestUser.id,
+            userId: user.id,
+            action: "CREATE_USER",
+            entityType: "user",
+            entityId: user.id,
+            details: `Created ${role} ${fullname}`,
+        }).then(() => {});
 
         const verificationToken = generateEmailVerificationToken({ userId: user.id });
 
@@ -80,7 +90,11 @@ export const registerUser = async (req: Request, res: Response) => {
         await sendEmail(email, 'Email Verification', emailMessage);
 
 
-        responseHandler.setSuccess(StatusCodes.CREATED, "Registration successful. Please check your email to verify your account.", user);
+        const message =
+            inactiveUntilActivated
+                ? "Manager created. Account is inactive until super admin activates it."
+                : "Registration successful. Please check your email to verify your account.";
+        responseHandler.setSuccess(StatusCodes.CREATED, message, user);
         return responseHandler.send(res);
 
     } catch (error) {
@@ -159,29 +173,132 @@ export const registerSuperAdmin = async (req: Request, res: Response) => {
 };
 export const getAllUsers = async (req: Request, res: Response) => {
     const responseHandler = new ResponseHandler();
-    const { page = 1, pageSize = 10 } = req.query;
-    const currentPage = Math.max(1, Number(page) || 1); 
-    const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100); 
-  
+    const { page = 1, pageSize = 10, role, status } = req.query;
+    const currentPage = Math.max(1, Number(page) || 1);
+    const currentPageSize = Math.min(Math.max(1, Number(pageSize) || 10), 100);
+
     const skip = (currentPage - 1) * currentPageSize;
     const take = currentPageSize;
-  
+
     try {
-      const users = await prisma.user.findMany({
-        include: {
-          account: true,
-        },
-        skip,
-        take,
-      });
-      const totalCount = await prisma.user.count();
+      const where: { account?: { role?: Roles; status?: boolean } } = {};
+      if (role && typeof role === "string" && Object.values(Roles).includes(role as Roles)) {
+        where.account = { ...where.account, role: role as Roles };
+      }
+      if (status !== undefined && status !== "") {
+        const active = status === "true" || status === "active";
+        where.account = { ...where.account, status: active };
+      }
+
+      const [users, totalCount] = await Promise.all([
+        prisma.user.findMany({
+          where,
+          include: {
+            account: true,
+            farms: { select: { id: true, name: true, location: true, status: true } },
+          },
+          skip,
+          take,
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.user.count({ where }),
+      ]);
+
       const paginationResult = paginate(users, totalCount, currentPage, currentPageSize);
-  
       responseHandler.setSuccess(StatusCodes.OK, "Users retrieved successfully", paginationResult);
       return responseHandler.send(res);
     } catch (error) {
-      console.error('Error retrieving users:', error);
+      console.error("Error retrieving users:", error);
       responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, "Error retrieving users");
+      return responseHandler.send(res);
+    }
+  };
+
+export const activateAccount = async (req: Request, res: Response) => {
+    const { accountId } = req.params;
+    const requestUser = (req as any).user?.data;
+    try {
+      const account = await prisma.account.update({
+        where: { id: accountId },
+        data: { status: true },
+      });
+      if (requestUser?.id) {
+        createLog({
+          accountId: requestUser.id,
+          action: "ACTIVATE_ACCOUNT",
+          entityType: "account",
+          entityId: accountId,
+          details: `Account ${account.username} activated`,
+        }).then(() => {});
+      }
+      responseHandler.setSuccess(StatusCodes.OK, "Account activated successfully", account);
+    } catch (error) {
+      responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, "Error activating account");
+    }
+    return responseHandler.send(res);
+  };
+
+export const registerVeterinarian = async (req: Request, res: Response) => {
+    try {
+      const { fullname, username, email, phone, password, farmId } = req.body;
+      const requestUser = (req as any).user.data;
+
+      const emailExist = await prisma.account.findUnique({ where: { email } });
+      const accountExist = await prisma.account.findUnique({ where: { username } });
+      if (emailExist || accountExist) {
+        responseHandler.setError(StatusCodes.BAD_REQUEST, "Email or username already exists.");
+        return responseHandler.send(res);
+      }
+
+      const userAccount = await prisma.account.create({
+        data: {
+          username,
+          email,
+          phone,
+          role: Roles.VETERINARIAN,
+          password: await hashPassword(password),
+          status: false,
+        },
+      });
+
+      const user = await prisma.user.create({
+        data: {
+          accountId: userAccount.id,
+          fullname,
+          gender: null,
+        },
+      });
+
+      await prisma.veterinarian.create({
+        data: {
+          name: fullname,
+          email: email!,
+          phone: phone || "",
+          farmId: farmId || null,
+          accountId: userAccount.id,
+        },
+      });
+
+      if (requestUser?.id) {
+        createLog({
+          accountId: requestUser.id,
+          userId: user.id,
+          action: "CREATE_VETERINARIAN",
+          entityType: "account",
+          entityId: userAccount.id,
+          details: `Veterinarian ${fullname} account created`,
+        }).then(() => {});
+      }
+
+      responseHandler.setSuccess(
+        StatusCodes.CREATED,
+        "Veterinarian account created. Inactive until super admin activates.",
+        { user, account: userAccount }
+      );
+      return responseHandler.send(res);
+    } catch (error) {
+      console.error(error);
+      responseHandler.setError(StatusCodes.INTERNAL_SERVER_ERROR, "Server error");
       return responseHandler.send(res);
     }
   };
@@ -195,7 +312,8 @@ export const emailVerification = async (req: Request, res: Response) => {
 
     try {
         const decoded = verifyToken(token as string, "verify-email");
-        const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+        const userId = decoded?.data?.userId ?? decoded?.userId;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
         const account = await prisma.account.findUnique({ where: { id: user?.accountId } });
         if (!user) {
             return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid verification link.' });
@@ -216,29 +334,30 @@ export const emailVerification = async (req: Request, res: Response) => {
 
 export const userLogin = (req: Request, res: Response, next: NextFunction) => {
     passportLocal.authenticate('local', (err: any, user: UserI) => {
-
-        if (err) {
-            return next(err);
-        }
+        if (err) return next(err);
         if (!user) {
             responseHandler.setError(StatusCodes.BAD_REQUEST, 'Invalid email or password');
             return responseHandler.send(res);
         }
         try {
+            createLog({
+                accountId: (user as any).userFound.id,
+                userId: (user as any).userFound.userId,
+                action: 'LOGIN',
+                entityType: 'auth',
+                details: 'User logged in',
+            }).then(() => {});
             req.login(user, (err) => {
-                if (err) {
-                    return next(err);
-                }
+                if (err) return next(err);
                 return res.status(StatusCodes.OK).json({
                     message: 'Login successful',
-                    user
+                    user,
                 });
             });
         } catch (error) {
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ status: ReasonPhrases.INTERNAL_SERVER_ERROR, error: 'Server error' });
         }
     })(req, res, next);
-
 };
 
 export const userLogout = (req: Request, res: Response) => {

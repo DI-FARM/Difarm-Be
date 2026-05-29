@@ -1,0 +1,25 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const signupValidation_middleware_1 = __importDefault(require("../../middleware/signupValidation.middleware"));
+const auth_controller_1 = require("../../controller/auth.controller");
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const validation_1 = __importDefault(require("../../middleware/validation/validation"));
+const resetPasswordSchemas_1 = __importDefault(require("../../validation/resetPasswordSchemas"));
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const client_1 = require("@prisma/client");
+const isAuthorized_middleware_1 = __importDefault(require("../../middleware/isAuthorized.middleware"));
+const auth_middleware_1 = __importDefault(require("../../middleware/auth.middleware"));
+const admin_validation_1 = __importDefault(require("../../validation/admin.validation"));
+const route = (0, express_1.Router)();
+route.post("/signup", isAuthorized_middleware_1.default, (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.SUPERADMIN]), (0, asyncWrapper_1.default)(auth_middleware_1.default.checkInitialBody), signupValidation_middleware_1.default, auth_controller_1.registerUser);
+route.post("/register/super", (0, validation_1.default)(admin_validation_1.default.adminSchema), auth_controller_1.registerSuperAdmin);
+route.post('/login', auth_controller_1.userLogin);
+route.post('/logout', auth_controller_1.userLogout);
+route.get('/users', auth_controller_1.getAllUsers);
+route.get("/forgotpass/", (0, validation_1.default)(resetPasswordSchemas_1.default.forgotPasswordSchema), (0, asyncWrapper_1.default)(auth_controller_1.forgotPassword));
+route.get("/resetpass/:token", (0, validation_1.default)(resetPasswordSchemas_1.default.resetPasswordSchema), (0, asyncWrapper_1.default)(auth_controller_1.resetPassword));
+exports.default = route;

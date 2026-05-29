@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const client_1 = require("@prisma/client");
+const asyncWrapper_1 = __importDefault(require("../../util/asyncWrapper"));
+const productionTransaction_middleware_1 = __importDefault(require("../../middleware/productionTransaction.middleware"));
+const productionTransaction_controller_1 = __importDefault(require("../../controller/productionTransaction.controller"));
+const checkRole_middleware_1 = __importDefault(require("../../middleware/checkRole.middleware"));
+const validation_1 = __importDefault(require("../../middleware/validation/validation"));
+const prodTransactionSchema_1 = __importDefault(require("../../validation/prodTransactionSchema"));
+const farm_middleware_1 = __importDefault(require("../../middleware/farm.middleware"));
+const router = (0, express_1.Router)();
+router.post("/:farmId", (0, validation_1.default)(prodTransactionSchema_1.default.newTransactionSchame), (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), (0, asyncWrapper_1.default)(productionTransaction_middleware_1.default.checkProductAvailable), (0, asyncWrapper_1.default)(productionTransaction_controller_1.default.addTransaction));
+router.get("/:farmId", (0, checkRole_middleware_1.default)([client_1.Roles.SUPERADMIN, client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(farm_middleware_1.default.checkUserFarmExists), (0, asyncWrapper_1.default)(productionTransaction_controller_1.default.allTransactions));
+router.get("/single/:transactionId", (0, checkRole_middleware_1.default)([client_1.Roles.SUPERADMIN, client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(productionTransaction_middleware_1.default.checkUserTansactionExists), (0, asyncWrapper_1.default)(productionTransaction_controller_1.default.singleTransactions));
+router.patch("/:transactionId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, validation_1.default)(prodTransactionSchema_1.default.updateTransactionSchame), (0, asyncWrapper_1.default)(productionTransaction_middleware_1.default.checkUserTansactionExists), (0, asyncWrapper_1.default)(productionTransaction_controller_1.default.updateTransactions));
+router.delete("/:transactionId", (0, checkRole_middleware_1.default)([client_1.Roles.ADMIN, client_1.Roles.MANAGER]), (0, asyncWrapper_1.default)(productionTransaction_middleware_1.default.checkUserTansactionExists), (0, asyncWrapper_1.default)(productionTransaction_controller_1.default.removeTransactions));
+exports.default = router;

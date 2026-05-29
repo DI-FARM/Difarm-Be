@@ -12,33 +12,33 @@ const router = Router();
 
 router.get(
   "/:farmId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   asyncWrapper(wasteLogController.allWasteLogs)
 );
 router.post(
   "/:farmId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   validate(wasteLogValidation.newWasteLogSchema),
   asyncWrapper(farmMiddleware.checkUserFarmExists),
   asyncWrapper(wasteLogController.createWasteLog)
 );
 router.get(
   "/waste/:wasteId",
-  checkRole([Roles.SUPERADMIN, Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(wasteLogMiddleware.checkWasteLogExists),
   asyncWrapper(wasteLogController.singleWasteLog)
 );
 router.patch(
   "/:wasteId",
-  checkRole([Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   validate(wasteLogValidation.newWasteLogSchema),
   asyncWrapper(wasteLogMiddleware.checkWasteLogExists),
   asyncWrapper(wasteLogController.updateWasteLog)
 );
 router.delete(
   "/:wasteId",
-  checkRole([Roles.ADMIN]),
+  checkRole([Roles.SUPERADMIN, Roles.ADMIN, Roles.MANAGER]),
   asyncWrapper(wasteLogMiddleware.checkWasteLogExists),
   asyncWrapper(wasteLogController.deleteWasteLog)
 );

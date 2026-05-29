@@ -80,8 +80,10 @@ export const getAllProductions = async (req: Request, res: Response) => {
   try {
     let productions;
 
+    const whereFarm = farmId ? { farmId } : {};
     if (user.role === Roles.SUPERADMIN) {
       productions = await prisma.production.findMany({
+        where: whereFarm,
         include: { cattle: true },
         skip,
         take,
@@ -98,7 +100,7 @@ export const getAllProductions = async (req: Request, res: Response) => {
       return responseHandler.send(res);
     }
     const totalCount = await prisma.production.count({
-      where: user.role === Roles.ADMIN ? { farmId } : {},
+      where: user.role === Roles.SUPERADMIN ? whereFarm : { farmId },
     });
 
     const paginationResult = paginate(productions, totalCount, currentPage, currentPageSize);

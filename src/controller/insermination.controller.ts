@@ -49,7 +49,7 @@ export const getAllInseminations = async (req: Request, res: Response) => {
   try {
    let inseminations;
 
-    if (user.role === Roles.ADMIN || user.role === Roles.MANAGER) {
+    if (user.role === Roles.ADMIN || user.role === Roles.MANAGER || user.role === Roles.VETERINARIAN) {
       inseminations = await prisma.insemination.findMany({
         where: { farmId: req.params.farmId },
         include: { cattle: true, veterinarian: true },
@@ -66,7 +66,7 @@ export const getAllInseminations = async (req: Request, res: Response) => {
       });
     }
     const totalCount = await prisma.insemination.count({
-      where: user.role === Roles.ADMIN || user.role === Roles.MANAGER ? { farmId: req.params.farmId } : {},
+      where: (user.role === Roles.ADMIN || user.role === Roles.MANAGER || user.role === Roles.VETERINARIAN) ? { farmId: req.params.farmId } : {},
     });
     const paginationResult = paginate(inseminations, totalCount, currentPage, currentPageSize);
 
